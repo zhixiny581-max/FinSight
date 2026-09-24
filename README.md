@@ -1,6 +1,6 @@
 # FinSight / 财讯智析
 
-FinSight 是一个财经新闻分析平台。本仓库目前包含产品 UI 原型，并按四人协作边界预留了功能模块目录。
+FinSight 是一个财经新闻分析平台。本仓库按四人协作边界组织代码，包含产品 UI 原型、新闻功能原型和行情模块。
 
 ## 分工
 
@@ -20,6 +20,7 @@ FinSight/
 │   └── index.html
 ├── modules/
 │   ├── news/
+│   │   └── prototype/
 │   ├── analysis/
 │   └── market/
 ├── eval/
@@ -31,6 +32,8 @@ FinSight/
 ## 本地预览
 
 直接使用浏览器打开 `frontend/index.html` 即可查看当前 UI 原型。
+
+新闻导入与快讯流的独立演示及配置方式见 [`modules/news/README.md`](modules/news/README.md)。
 
 ## 协作约定
 

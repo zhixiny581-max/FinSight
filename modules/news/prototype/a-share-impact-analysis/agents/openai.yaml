@@ -1,0 +1,8 @@
+interface:
+  display_name: "A股新闻影响链分析"
+  short_description: "整理财经新闻并生成专业摘要、影响链、行业判断和候选A股"
+  brand_color: "#2563EB"
+  default_prompt: "Use $a-share-impact-analysis to turn this financial news into a concise summary, source links, an impact chain, affected industries, and tiered A-share candidates."
+
+policy:
+  allow_implicit_invocation: true
