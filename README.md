@@ -1,5 +1,13 @@
 # FinSight / 财讯智析
 
+## 最新更新：核心版前端（供组员同步）
+
+更新时间：2026-09-28 23:37（北京时间，UTC+8）
+
+新增核心版前端 [`modules/news/prototype/index-core.html`](modules/news/prototype/index-core.html)，保留新闻与智能分析等核心功能，移除导出今日清单、复盘跟踪、复盘校验及 `.ics` 下载入口；增加产业链传导路径放大查看，修复顶部栏固定问题。
+
+同时更新页面路由和打包清单。核心版沿用现有后端接口与配置，原版 `index.html` 保留。组员同步最新代码后，可按[项目启动说明](modules/news/prototype/README.md)在本地运行。
+
 FinSight 是一个财经新闻分析平台。本仓库按四人协作边界组织代码，包含产品 UI 原型、新闻功能原型和行情模块。
 
 ## 分工
@@ -8,7 +16,7 @@ FinSight 是一个财经新闻分析平台。本仓库按四人协作边界组�
 | --- | --- | --- |
 | A | `frontend/` | 产品与前端 |
 | B | `modules/news/` | 快讯流与新闻导入 |
-| C | `modules/analysis/` | 智能分析与面向用户的复盘校验 |
+| C | `modules/analysis/` | 智能分析 |
 | D | `modules/market/` | 开市日历、日 K 数据与行情能力 |
 | D | `eval/` | 最终集成、离线评测、测试用例与评测结果 |
 
@@ -31,7 +39,7 @@ FinSight/
 
 ## 本地预览
 
-当前集成新闻导入、快讯流和智能分析的可运行前端为 [`modules/news/prototype/index.html`](modules/news/prototype/index.html)，需要通过其本地 Node 服务打开，不能直接使用 `file://`。启动与配置方式见 [`modules/news/README.md`](modules/news/README.md)。
+当前核心版前端为 [`modules/news/prototype/index-core.html`](modules/news/prototype/index-core.html)，本地服务启动后通过 `/core` 访问。原版 [`modules/news/prototype/index.html`](modules/news/prototype/index.html) 仍通过 `/` 访问。两个页面都需要本地 Node 服务提供接口，不能直接双击 HTML 文件运行；启动与配置方式见 [原型启动说明](modules/news/prototype/README.md)。
 
 `frontend/index.html` 与工作区外层的旧版 `财讯智析-UI原型.html` 作为早期静态原型保留，不是当前新闻功能的运行入口。
 
