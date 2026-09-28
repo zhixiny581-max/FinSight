@@ -3,7 +3,7 @@ $projectRoot = $PSScriptRoot
 $outputName = 'FinSight-news-prototype-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.zip'
 $outputPath = Join-Path (Split-Path -Parent $projectRoot) $outputName
 $files = @(
-    '.env.example', 'README.md', 'package.json', 'index.html', 'server.js',
+    '.env.example', 'README.md', 'package.json', 'index.html', 'index-core.html', 'server.js',
     'ifind_client.js', 'start.ps1', 'package.ps1'
 )
 $files += @(Get-ChildItem -LiteralPath $projectRoot -Filter '*.cmd' -File | Select-Object -ExpandProperty Name)

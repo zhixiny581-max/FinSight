@@ -32,6 +32,7 @@ const SKILL_DIR = process.env.IFIND_SKILL_DIR || path.join(os.homedir(), '.codex
 const DEEPSEEK_BASE_URL = (process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/+$/, '');
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-flash';
 const INDEX_FILE = path.join(ROOT, 'index.html');
+const CORE_INDEX_FILE = path.join(ROOT, 'index-core.html');
 const CONFIG_FILE = path.join(SKILL_DIR, 'mcp_config.json');
 const CALL_FILE = path.join(SKILL_DIR, 'call-node.js');
 const LOCAL_IFIND_CLIENT = path.join(ROOT, 'ifind_client.js');
@@ -2784,10 +2785,16 @@ async function handleRequest(request, response) {
   }
 
   if (request.method !== 'GET') return sendJson(response, 405, { ok: false, error: '只支持 GET 请求' });
-  if (requestUrl.pathname !== '/' && requestUrl.pathname !== '/index.html') return sendJson(response, 404, { ok: false, error: '页面不存在' });
-  if (!fs.existsSync(INDEX_FILE)) return sendJson(response, 500, { ok: false, error: '找不到 index.html' });
+  const pageFile = new Map([
+    ['/', INDEX_FILE],
+    ['/index.html', INDEX_FILE],
+    ['/core', CORE_INDEX_FILE],
+    ['/index-core.html', CORE_INDEX_FILE]
+  ]).get(requestUrl.pathname);
+  if (!pageFile) return sendJson(response, 404, { ok: false, error: '页面不存在' });
+  if (!fs.existsSync(pageFile)) return sendJson(response, 500, { ok: false, error: '找不到页面文件' });
   response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-  fs.createReadStream(INDEX_FILE).pipe(response);
+  fs.createReadStream(pageFile).pipe(response);
 }
 
 const server = http.createServer((request, response) => {

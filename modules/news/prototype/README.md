@@ -16,6 +16,12 @@
 
 不能直接双击 `index.html`。该页面依赖 `/api/news`、`/api/imports` 和 `/api/analyze` 等本地接口；通过 `file://` 打开时没有 Node 服务提供这些接口。
 
+## 核心版界面
+
+服务启动后可通过 <http://127.0.0.1:3000/core> 打开 `index-core.html`。核心版保留快讯流、新闻导入、智能分析、候选标的、按需日 K 和开市日历，移除了“导出今日清单”“加入复盘跟踪”、复盘校验页面以及页面内 `.ics` 下载入口。
+
+核心版与原版共用现有 `/api/news`、`/api/imports`、`/api/analyze` 和 `/api/stock-kline`，不需要单独配置密钥、端口或业务接口。原来的 `/` 与 `/index.html` 继续返回完整原型页面；本机若使用其他端口，请将地址中的 `3000` 替换为实际端口。
+
 ## 命令行启动
 
 也可以在本目录运行：
@@ -43,4 +49,4 @@ npm start
 
 `GET /api/news` 会在 `processing_stats` 中保留候选数、缓存命中数、DeepSeek新处理数、质量淘汰数、失败数、去重数和最终展示数，并在 `query_log` 中记录实际检索日期、检索词和返回数量。这些字段用于开发追溯，页面不展示内部淘汰统计。
 
-本目录的 `index.html` 是当前实际使用、并已接入智能分析框架的前端。旧的 `frontend/index.html` 和工作区外层 `财讯智析-UI原型.html` 不参与本次新闻功能修改；后续前端调整应继续在当前页面上增量完成。行情模块仍位于 `modules/market/`。
+本目录的 `index.html` 是默认前端，`index-core.html` 是共用同一套接口的核心版前端，两者都已接入智能分析框架。旧的 `frontend/index.html` 和工作区外层 `财讯智析-UI原型.html` 不参与本次新闻功能修改。行情模块仍位于 `modules/market/`。
