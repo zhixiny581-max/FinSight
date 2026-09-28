@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>财讯智析 FinSight — 财经新闻分析平台</title>
+<style>
+/* ============================================================
+   设计令牌
+   图表色板取自 dataviz 参考调色板，已通过校验脚本：
+   - 分类 3 槽（蓝/橙/青）all-pairs 通过（浅色 9.2 / 深色 8.4 CVD ΔE）
+   - 浅色模式青色对表面对比 2.74:1 → 采用"直接标注 + 表格视图"补偿
+   - 涨/跌为领域语义色（A股惯例：红涨绿跌），始终与 ▲▼ 符号及文字同现
+   - 星级用单色 + 数量承载强度，不做色阶（1→5 色阶的相邻 ΔL 通不过校验）
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --r-s:6px;--r-m:10px;--r-l:14px;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --plane:#f9f9f7;--surface:#fcfcfb;--surface-2:#f4f3f0;--surface-3:#eceae4;
+  --ink:#0b0b0b;--ink-2:#52514e;--ink-3:#898781;
+  --grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);--border-2:rgba(11,11,11,.20);
+  --accent:#2a78d6;--accent-ink:#1c5cab;--accent-soft:rgba(42,120,214,.10);--on-accent:#fff;
+  --up:#d03b3b;--up-soft:rgba(208,59,59,.10);
+  --down:#0f9d58;--down-soft:rgba(15,157,88,.10);
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;
+  --warn:#8a6100;--warn-soft:rgba(250,178,25,.20);
+  --shadow:0 1px 2px rgba(11,11,11,.06),0 12px 32px rgba(11,11,11,.07);
+  --candle-up-fill:#fcfcfb;
+  --m1:#cde2fb;--m2:#9ec5f4;--m3:#5598e7;--m4:#2a78d6;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --plane:#0d0d0d;--surface:#1a1a19;--surface-2:#232322;--surface-3:#2c2c2a;
+  --ink:#ffffff;--ink-2:#c3c2b7;--ink-3:#898781;
+  --grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--border-2:rgba(255,255,255,.16);
+  --accent:#3987e5;--accent-ink:#8ab8f2;--accent-soft:rgba(57,135,229,.16);--on-accent:#fff;
+  --up:#f06565;--up-soft:rgba(240,101,101,.15);
+  --down:#2bb673;--down-soft:rgba(43,182,115,.15);
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;
+  --warn:#fab219;--warn-soft:rgba(250,178,25,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.55),0 12px 32px rgba(0,0,0,.40);
+  --candle-up-fill:#1a1a19;
+  --m1:#184f95;--m2:#256abf;--m3:#3987e5;--m4:#6da7ec;
+}
+html,body{height:100%}
+body{background:var(--plane);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--axis);border-radius:6px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- 顶栏 ---------- */
+.topbar{position:sticky;top:0;z-index:60;height:58px;display:flex;align-items:center;gap:18px;
+  padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:.2px;white-space:nowrap}
+.brand .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,var(--accent),var(--s3));
+  display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700}
+.brand .sub{font-size:11px;color:var(--ink-3);font-weight:400;letter-spacing:0}
+.searchbox{flex:1;max-width:440px;position:relative}
+.searchbox input{width:100%;height:36px;padding:0 12px 0 34px;border-radius:var(--r-s);
+  background:var(--surface-2);border:1px solid var(--border);outline:none}
+.searchbox input:focus{border-color:var(--accent);background:var(--surface)}
+.searchbox svg{position:absolute;left:10px;top:9px;opacity:.5}
+.topbar .spacer{flex:1}
+.demo-tag{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;
+  background:var(--warn-soft);color:var(--warn);font-size:11.5px;font-weight:600;white-space:nowrap}
+.mkt-tag{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;
+  background:var(--surface-2);border:1px solid var(--border);font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r-s);
+  background:var(--surface-2);border:1px solid var(--border);cursor:pointer}
+.icon-btn:hover{border-color:var(--border-2)}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
+  display:grid;place-items:center;font-size:12px;font-weight:650}
+
+/* ---------- 骨架 ---------- */
+.shell{display:grid;grid-template-columns:212px minmax(0,1fr)}
+.sidebar{position:sticky;top:58px;height:calc(100vh - 58px);overflow:auto;
+  padding:16px 12px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;gap:4px}
+.nav-label{font-size:11px;color:var(--ink-3);padding:10px 10px 4px;letter-spacing:.5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-s);
+  color:var(--ink-2);cursor:pointer;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--surface-2);color:var(--ink)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 35%,transparent);font-weight:600}
+.nav-item .ico{width:16px;text-align:center;opacity:.9}
+.nav-item .badge{margin-left:auto;font-size:11px;background:var(--surface-3);color:var(--ink-2);
+  padding:1px 7px;border-radius:999px;font-variant-numeric:tabular-nums}
+.nav-item.active .badge{background:color-mix(in srgb,var(--accent) 25%,transparent);color:var(--accent-ink)}
+.src-panel{margin-top:auto;border-top:1px solid var(--border);padding-top:12px}
+.src-row{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;color:var(--ink-2)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.dot.ok{background:var(--down)}
+.dot.warn{background:var(--warn)}
+.dot.off{background:var(--ink-3);opacity:.5}
+main{padding:22px 26px 72px;min-width:0}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ---------- 通用元件 ---------- */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+h1{font-size:21px;font-weight:650;letter-spacing:-.2px}
+.page-head .desc{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:var(--r-s);
+  background:var(--surface-2);border:1px solid var(--border);cursor:pointer;white-space:nowrap;color:var(--ink)}
+.btn:hover{border-color:var(--border-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.sm{height:28px;padding:0 10px;font-size:12.5px}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m)}
+.chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:5px;
+  background:var(--surface-2);border:1px solid var(--border);font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.chip.tag{background:transparent;color:var(--ink-3);border-style:dashed}
+.chip.src{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.chip.up{background:var(--up-soft);color:var(--up);border-color:transparent;font-weight:600}
+.chip.down{background:var(--down-soft);color:var(--down);border-color:transparent;font-weight:600}
+.chip.flat{background:var(--surface-3);color:var(--ink-2);border-color:transparent}
+.chip.hot{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:600}
+/* 命中/未中：不与"涨红跌绿"的市场语义色共用通道，靠字形 + 文字承载 */
+.chip.hit{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.chip.miss{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:600}
+.stars{display:inline-flex;align-items:center;gap:1px;font-size:12px;letter-spacing:.5px}
+.stars i{font-style:normal;color:var(--accent)}
+.stars i.off{color:var(--ink-3);opacity:.35}
+.stars .num{font-size:11px;color:var(--ink-3);margin-left:4px;font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-3)}
+.sec-title{font-size:12px;font-weight:650;color:var(--ink-2);letter-spacing:.4px;margin-bottom:10px;
+  display:flex;align-items:center;gap:8px}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--border)}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- 筛选行（统一作用于下方所有内容） ---------- */
+.filterbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:11px 14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);margin-bottom:16px}
+.filterbar label{font-size:12px;color:var(--ink-3);margin-right:-4px}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-s);padding:2px}
+.seg button{height:26px;padding:0 9px;border:0;background:transparent;border-radius:4px;cursor:pointer;
+  font-size:12.5px;color:var(--ink-2)}
+.seg button.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+.seg button .st{color:var(--accent);font-size:11px}
+.seg button:not(.on) .st{color:var(--ink-3);opacity:.5}
+.select{height:30px;padding:0 8px;border-radius:var(--r-s);background:var(--surface-2);
+  border:1px solid var(--border);cursor:pointer;font-size:12.5px}
+.selwrap{position:relative;display:inline-flex}
+
+/* ---------- 日历 ---------- */
+.pop{position:relative}
+.pop-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:70;width:288px;padding:12px;
+  background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r-m);box-shadow:var(--shadow);display:none}
+.pop-panel.on{display:block}
+/* 复盘日的按钮贴右边缘，弹层须向右对齐，否则溢出视口 */
+#rvPop .pop-panel{left:auto;right:0}
+.cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.cal-hd .m{font-size:13px;font-weight:650}
+.cal-nav{display:flex;gap:4px}
+.cal-nav button{width:26px;height:26px;border-radius:5px;border:1px solid var(--border);
+  background:var(--surface-2);cursor:pointer;line-height:1;display:grid;place-items:center}
+.cal-nav button:hover:not([disabled]){border-color:var(--border-2)}
+.cal-nav button[disabled]{opacity:.3;cursor:not-allowed}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-wd{font-size:10.5px;color:var(--ink-3);text-align:center;padding:3px 0}
+.cal-d{position:relative;height:34px;border-radius:5px;border:1px solid transparent;background:transparent;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+.cal-d:hover:not([disabled]){background:var(--surface-2);border-color:var(--border)}
+.cal-d.sel{background:var(--accent);color:var(--on-accent);font-weight:650}
+.cal-d.sel .mk{background:var(--on-accent)!important}
+.cal-d[disabled]{color:var(--ink-3);opacity:.32;cursor:not-allowed}
+.cal-d.out{visibility:hidden}
+/* 标记点绝对定位，不参与排版，保证各行高度严格对齐 */
+.cal-d .mk{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--accent)}
+.cal-d .mk.h{background:var(--warn)}
+.cal-d .mk.m{background:var(--up)}
+.cal-d.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+/* 开市日历：底色承载开市/休市状态，底部圆点单独承载"有快讯"，两个通道互不干扰 */
+.cal-d.m-open{background:var(--accent-soft);color:var(--accent-ink);font-weight:650}
+.cal-d.m-weekend{background:var(--surface-2);color:var(--ink-3)}
+.cal-d.m-holiday{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.cal-d.m-makeup{background:var(--up-soft);color:var(--up);font-weight:600}
+/* 开市日历为只读展示：底色本身即含义，不套用"不可点选"的灰化 */
+.cal-d[class*="m-"]{opacity:1;cursor:default}
+/* 快讯点需在四种底色（浅蓝/灰/浅黄/浅红）上都可辨，故用中性墨色而非主题蓝 */
+.cal-d[class*="m-"] .mk{background:var(--ink-2)}
+.cal-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;
+  padding-top:9px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-3)}
+.cal-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin-top:10px}
+.cal-legend .li{display:flex;align-items:center;gap:5px}
+.cal-legend .sw{width:9px;height:9px;border-radius:2px;flex:none}
+.cal-legend .dt{width:5px;height:5px;border-radius:50%;flex:none}
+
+/* ---------- 快讯流布局 ---------- */
+/* 快讯列表与右栏底部齐平：行高由右栏（内容是固定的几张卡）决定，快讯列表用绝对
+   定位填满这一行、自己滚。所以右栏绝不能加 overflow —— 它一旦能滚，行高就变成由
+   视口决定，两列底部再也对不齐。 */
+.feed-grid{display:grid;grid-template-columns:minmax(0,1fr) 308px;gap:20px;align-items:stretch}
+@media(max-width:1240px){.feed-grid{grid-template-columns:minmax(0,1fr)}}
+.feedlist{display:flex;flex-direction:column;gap:10px}
+.news{position:relative;display:grid;grid-template-columns:58px minmax(0,1fr);gap:16px;
+  padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);
+  border-radius:var(--r-m);cursor:pointer;transition:border-color .15s,background .15s}
+.news:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--border));
+  border-left-color:var(--accent);background:var(--surface-2)}
+.news .time{font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;padding-top:2px;font-weight:600}
+.news .time .d{display:block;font-size:10.5px;opacity:.8;font-weight:400;color:var(--ink-3)}
+.news .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.news h3{font-size:14.5px;font-weight:600;line-height:1.5;margin-bottom:7px}
+.news .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.news .brief{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border-left:2px solid var(--accent);
+  padding:7px 10px;border-radius:0 var(--r-s) var(--r-s) 0;margin-bottom:9px}
+.news:hover .brief{background:var(--surface-3)}
+.news .acts{display:flex;gap:10px;align-items:center;font-size:12.5px}
+.news .acts .link{color:var(--accent-ink);font-weight:600}
+.news .acts .link:hover{text-decoration:underline}
+.news .acts .ext{color:var(--ink-3)}
+.news .acts .ext:hover{color:var(--ink)}
+.fav{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:6px;border:1px solid transparent;
+  background:transparent;cursor:pointer;display:grid;place-items:center;font-size:15px;line-height:1;
+  color:var(--ink-3);opacity:.55;transition:.15s}
+.news:hover .fav{opacity:1}
+.fav:hover{background:var(--surface-3);border-color:var(--border)}
+.fav.on{opacity:1;color:var(--warn)}
+.news .body{padding-right:26px}
+
+/* ---------- 右栏 ---------- */
+.rail-col{display:flex;flex-direction:column;gap:14px;position:sticky;top:76px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:var(--r-m);overflow:hidden}
+.stat{background:var(--surface);padding:12px 14px}
+.stat .k{font-size:11.5px;color:var(--ink-3);margin-bottom:4px}
+.stat .v{font-size:24px;font-weight:640;letter-spacing:-.5px;line-height:1.15}
+.stat .v small{font-size:12px;font-weight:500;color:var(--ink-3);margin-left:3px;letter-spacing:0}
+.stat .d{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.hotlist{display:flex;flex-direction:column}
+.hotrow{display:flex;gap:10px;padding:9px 14px;border-top:1px solid var(--border);cursor:pointer}
+.hotrow:first-child{border-top:0}
+.hotrow:hover{background:var(--surface-2)}
+.hotrow .rank{font-size:12px;color:var(--ink-3);width:14px;flex:none;font-variant-numeric:tabular-nums;padding-top:1px}
+.hotrow .rank.top{color:var(--up);font-weight:700}
+.hotrow .t{font-size:12.5px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.weekstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.weekstrip .d{font-size:10.5px;color:var(--ink-3);padding-bottom:2px}
+.weekstrip .c{height:30px;border-radius:5px;display:grid;place-items:center;font-size:11.5px;
+  background:var(--surface-2);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.weekstrip .c.open{background:var(--accent-soft);color:var(--accent-ink);font-weight:650}
+.weekstrip .c.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+
+/* ---------- 导入页 ---------- */
+.imp-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+@media(max-width:1150px){.imp-grid{grid-template-columns:minmax(0,1fr)}}
+.impbox{padding:16px 18px}
+.impbox textarea{width:100%;min-height:120px;resize:vertical;padding:11px 12px;border-radius:var(--r-s);
+  background:var(--surface-2);border:1px solid var(--border);outline:none;line-height:1.6}
+.impbox textarea:focus{border-color:var(--accent);background:var(--surface)}
+.import-url{max-width:260px}
+.import-url a{display:inline-block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent-ink);text-decoration:none;vertical-align:bottom}
+.import-url a:hover{text-decoration:underline}
+.import-actions{display:flex;justify-content:flex-end;gap:6px;white-space:nowrap}
+.btn.import-delete{color:var(--down)}
+.btn.import-delete:hover{border-color:var(--down)}
+#importSummaryRetry[hidden]{display:none}
+.tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--border)}
+.tabs button{height:32px;padding:0 12px;border:0;background:transparent;cursor:pointer;font-size:13px;
+  color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--accent-ink);border-bottom-color:var(--accent);font-weight:650}
+.dropzone{border:1.5px dashed var(--border-2);border-radius:var(--r-m);padding:26px;text-align:center;
+  color:var(--ink-3);font-size:12.5px;cursor:pointer}
+.dropzone:hover{border-color:var(--accent);color:var(--ink-2)}
+.step{display:flex;gap:11px;padding:11px 0;border-top:1px solid var(--border)}
+.step:first-of-type{border-top:0}
+.step .n{width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
+  font-size:11px;font-weight:700;display:grid;place-items:center;flex:none;margin-top:1px}
+.step .t{font-size:12.5px;color:var(--ink-2);line-height:1.6}
+.step .t b{color:var(--ink);font-weight:600;display:block;margin-bottom:1px}
+.dropzone.drag{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.modal-scrim{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.46);display:none;
+  align-items:center;justify-content:center;padding:24px}
+.modal-scrim.on{display:flex}
+.modal-panel{width:min(680px,96vw);max-height:90vh;display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-l);box-shadow:var(--shadow)}
+.modal-head{display:flex;align-items:flex-start;gap:16px;padding:18px 20px;border-bottom:1px solid var(--border)}
+.modal-head>div:first-child{min-width:0;flex:1}
+.modal-head h2{font-size:17px;line-height:1.45;margin-top:2px}
+.modal-eyebrow{font-size:11px;color:var(--ink-3);letter-spacing:.4px}
+.modal-body{padding:18px 20px;overflow:auto}
+.import-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.import-summary{padding:13px 14px;border-radius:var(--r-s);background:var(--surface-2);
+  color:var(--ink-2);font-size:13px;line-height:1.75;margin-bottom:14px}
+.import-entities{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:620px){.form-grid{grid-template-columns:1fr}}
+.form-grid label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ink-3)}
+.form-grid select,.form-grid input{height:36px;border:1px solid var(--border);border-radius:var(--r-s);
+  background:var(--surface-2);padding:0 10px;outline:none;color:var(--ink)}
+.form-grid select:focus,.form-grid input:focus{border-color:var(--accent)}
+.importance-picker{padding:13px 14px;border:1px solid var(--border);border-radius:var(--r-s)}
+.importance-picker .label{font-size:12px;color:var(--ink-3);margin-bottom:7px}
+.star-pick{display:flex;gap:5px;margin-bottom:6px}
+.star-pick button{border:0;background:transparent;cursor:pointer;color:var(--ink-3);font-size:23px;line-height:1;padding:0 1px}
+.star-pick button.on{color:var(--accent)}
+.star-pick button[disabled]{cursor:default}
+.importance-picker .muted{font-size:11.5px;line-height:1.55}
+.modal-note{font-size:11.5px;color:var(--ink-3);line-height:1.65;margin-top:14px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--border)}
+
+/* ---------- 分析页 ---------- */
+.ana-grid{display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:1150px){.ana-grid{grid-template-columns:minmax(0,1fr)}}
+.src-doc{padding:16px 18px;position:sticky;top:76px}
+.src-doc .full{font-size:13.5px;line-height:1.75;color:var(--ink-2);margin:12px 0 14px}
+.src-doc .kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--border);font-size:12.5px}
+.src-doc .kv span:first-child{color:var(--ink-3)}
+.verdict{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;
+  padding:16px 18px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--up);margin-bottom:16px}
+.verdict.bear{border-left-color:var(--down)}
+.verdict.neutral{border-left-color:var(--ink-3)}
+.verdict .lead{font-size:14.5px;line-height:1.6;font-weight:500}
+.verdict .gauge{display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex:none}
+.meter{width:132px}
+.meter .track{height:6px;border-radius:3px;background:var(--surface-3);overflow:hidden}
+.meter .fill{height:100%;border-radius:3px;background:var(--accent)}
+.meter .lab{font-size:11px;color:var(--ink-3);margin-top:5px;display:flex;justify-content:space-between}
+.chain{padding:16px 18px;margin-bottom:16px}
+.chain-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;position:relative}
+.chain-col{padding:0 14px;position:relative}
+.chain-col:first-child{padding-left:0}
+.chain-col:last-child{padding-right:0}
+.chain-col+.chain-col::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:1px;background:var(--border)}
+.chain-hd{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.chain-hd .sw{width:9px;height:9px;border-radius:2px;flex:none}
+.chain-hd .nm{font-size:12.5px;font-weight:650}
+.chain-hd .sub{font-size:11px;color:var(--ink-3)}
+.node{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-s);
+  background:var(--surface-2);border:1px solid var(--border);margin-bottom:7px;cursor:pointer;
+  transition:border-color .15s}
+.node:hover{border-color:var(--accent);background:var(--surface-3)}
+.node .nm{font-size:12.5px;font-weight:600}
+.node .code{font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.node .r{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+.arrow{font-size:11px;font-weight:700}
+.arrow.up{color:var(--up)}
+.arrow.down{color:var(--down)}
+.arrow.flat{color:var(--ink-3)}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+/* 上内边距留给吸顶态：表头粘在滚动区顶部时，文字不至于贴着上沿 */
+table.tbl th{text-align:left;font-weight:600;color:var(--ink-3);font-size:11.5px;padding:8px 10px;
+  border-bottom:1px solid var(--border);white-space:nowrap}
+table.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.tbl tr:last-child td{border-bottom:0}
+table.tbl tbody tr{cursor:pointer}
+table.tbl tbody tr:hover{background:var(--surface-2)}
+table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+
+/* ---------- 滚动容器 ----------
+   示例数据每个列表都只有几条，接入真实数据源后会长得多。凡是"随数据变长"的
+   列表一律给定高上限 + 内部滚动，让页面骨架（标题、筛选条、表头、脚注）始终留在
+   视野里，不会被列表顶出去。滚动条统一收细、压成低对比，免得在浅色卡片上抢眼。
+   用法：给容器加 class="scroll"。 */
+/* 滑块用 --ink-3 而非 --border-2：后者只有 20% 黑，在白卡上等于看不见，
+   而滚动条在这里是“下面还有内容”的唯一提示，必须能看见 */
+.scroll{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+  scrollbar-color:var(--ink-3) transparent}
+.scroll::-webkit-scrollbar{width:11px;height:11px}
+.scroll::-webkit-scrollbar-track,
+.scroll::-webkit-scrollbar-corner{background:transparent}
+.scroll::-webkit-scrollbar-thumb{background:var(--ink-3);border-radius:8px;
+  border:3px solid transparent;background-clip:content-box}
+.scroll::-webkit-scrollbar-thumb:hover{background:var(--ink-2);border:3px solid transparent;
+  background-clip:content-box}
+
+/* 表格容器：横向可滚 + 纵向封顶，表头吸顶（border-collapse 下边框会跟着滚走，
+   故用 inset 阴影补一条分隔线） */
+.tblwrap{overflow-x:auto}
+.tblwrap thead th{position:sticky;top:0;z-index:2;background:var(--surface);
+  box-shadow:inset 0 -1px 0 var(--border)}
+
+/* 各模块的高度上限。示例数据都装得下，超出即在模块内滚动，不影响整页高度 */
+/* 快讯流（含我的收藏，同一列表的筛选态）：列表只负责在行高内滚动，行高由右栏决定 */
+.feed-col  {position:relative;min-height:520px}   /* 只给下限：不参与撑高，避免自我循环 */
+.feedlist  {position:absolute;inset:0;overflow-y:auto}
+/* 真实新闻数量会超过原型示例，快讯流改为跟随页面自然增长，使用浏览器整页滚动。 */
+.feed-col  {position:relative;min-height:0}
+.feedlist  {position:static;max-height:none;overflow:visible}
+.feedlist.scroll {overflow-y:visible;overflow-x:visible}
+/* 右栏不设高度上限、不加 overflow —— 它的自然高度就是这一行的高度 */
+.hotlist  {max-height:268px}                           /* 高影响榜 */
+.src-doc  {max-height:calc(100vh - 100px)}             /* 源快讯，长文自己滚，不撑破吸顶 */
+.chain-cols{max-height:min(48vh,420px)}                /* 产业链传导路径（三列一起滚，保持行对齐） */
+#missList {max-height:min(52vh,460px);padding-right:4px} /* 出入分析；示例 4 条刚好放满，再多就滚 */
+.tblwrap  {max-height:min(56vh,500px)}                 /* 明细对照表 / 受影响标的 / 导入批次 */
+.pop-panel{max-height:min(64vh,440px);overflow-y:auto} /* 日期、标签弹层 */
+.stage-dot{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.stage-dot i{width:8px;height:8px;border-radius:2px;flex:none;display:block}
+.reason{padding:16px 18px;margin-bottom:16px}
+.reason ol{list-style:none;counter-reset:r}
+.reason li{counter-increment:r;position:relative;padding:0 0 14px 30px;font-size:13px;line-height:1.7;color:var(--ink-2)}
+.reason li:last-child{padding-bottom:0}
+.reason li::before{content:counter(r);position:absolute;left:0;top:1px;width:19px;height:19px;border-radius:50%;
+  background:var(--accent-soft);color:var(--accent-ink);font-size:11px;font-weight:700;
+  display:grid;place-items:center}
+.reason li b{color:var(--ink);font-weight:600}
+
+/* ---------- K线抽屉 ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s;z-index:80}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(860px,94vw);background:var(--plane);
+  border-left:1px solid var(--border);box-shadow:var(--shadow);transform:translateX(101%);
+  transition:transform .26s cubic-bezier(.32,.72,.28,1);z-index:90;display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer-hd{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);
+  background:var(--surface);flex-wrap:wrap}
+.drawer-hd .nm{font-size:16px;font-weight:650}
+.drawer-hd .code{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.drawer-hd .px{font-size:22px;font-weight:650;letter-spacing:-.4px}
+.drawer-bd{flex:1;overflow:auto;padding:18px 20px 40px}
+.kwrap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);padding:14px 14px 6px}
+.kwrap svg{display:block;width:100%;height:auto}
+.klegend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin-bottom:8px}
+.klegend .li{display:flex;align-items:center;gap:6px}
+.klegend .sw{width:14px;height:2px;border-radius:1px}
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;z-index:5;
+  background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r-s);
+  padding:8px 10px;font-size:11.5px;box-shadow:var(--shadow);min-width:150px}
+.tip .hd{font-weight:650;margin-bottom:5px;font-size:12px}
+.tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+.tip .r span:first-child{color:var(--ink-3)}
+
+/* ---------- 复盘页 ---------- */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+@media(max-width:900px){.tiles{grid-template-columns:1fr 1fr}}
+.tile{padding:14px 16px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--border)}
+.tile .k{font-size:12px;color:var(--ink-3);margin-bottom:6px}
+.tile .v{font-size:30px;font-weight:650;letter-spacing:-.8px;line-height:1.1}
+.tile .v small{font-size:13px;font-weight:500;color:var(--ink-3);letter-spacing:0;margin-left:2px}
+.tile .d{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.window{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--r-m);
+  background:var(--accent-soft);border:1px solid transparent;margin-bottom:16px;font-size:12.5px;
+  color:var(--accent-ink);flex-wrap:wrap}
+/* 两栏按内容体量分：矩阵是正方形热力图，出入分析是文字列表，给矩阵略少一点 */
+.review-grid{display:grid;grid-template-columns:minmax(0,44fr) minmax(0,56fr);gap:20px;align-items:stretch}
+/* 收成单栏后卡片会变得很宽，矩阵须自己收住并居中，否则单元格被拉成横条；
+   行高同时调高一档，维持单元格的宽高比与双栏时接近 */
+@media(max-width:1240px){
+  .review-grid{grid-template-columns:minmax(0,1fr)}
+  .cmx{max-width:620px;margin:0 auto;grid-template-rows:auto repeat(3,78px)}
+}
+.miss{padding:16px 18px}
+.missrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:11px 0;border-top:1px solid var(--border);align-items:start}
+.missrow:first-of-type{border-top:0}
+.missrow .h{font-size:12.5px;font-weight:600;margin-bottom:3px}
+.missrow .b{font-size:12.5px;color:var(--ink-2);line-height:1.6}
+#reviewBody td:first-child{white-space:nowrap}
+#reviewBody td:last-child{min-width:260px}
+
+/* 方向命中矩阵 */
+/* 矩阵撑满卡片：列按 1fr 均分，行在 54px 底限与卡片余高之间伸缩，卡内不留死区 */
+.cmx{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));
+  grid-template-rows:auto repeat(3,minmax(54px,1fr));gap:4px;
+  width:100%;height:100%;font-variant-numeric:tabular-nums}
+.cmx .h{font-size:11px;color:var(--ink-3);display:grid;place-items:center;padding:2px 4px;white-space:nowrap}
+.cmx .rh{font-size:11.5px;color:var(--ink-2);display:flex;align-items:center;justify-content:flex-end;
+  padding-right:10px;white-space:nowrap}
+.cmx .c{min-height:54px;border-radius:6px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:1px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer}
+.cmx .c .n{font-size:22px;font-weight:650;line-height:1.1}
+.cmx .c .s{font-size:11px;opacity:.85}
+.cmx .c.diag{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.cmx .c.dim{opacity:.55}
+.cmx .c:hover{border-color:var(--border-2)}
+#matrix{flex:1;min-height:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-3);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+/* ---------- 开发交接标注 ---------- */
+/* 徽标绝对定位，不参与排版；.fav 本身已是 absolute，须排除，否则会被改成 relative 而错位 */
+.nt{display:none}
+body.notes [data-note]:not(.fav):not(.news){position:relative}
+body.notes .nt{display:grid;place-items:center;position:absolute;top:-7px;right:-7px;
+  min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--s2);color:#fff;
+  font-size:10px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
+  box-shadow:0 0 0 2px var(--surface);z-index:6;cursor:help}
+body.notes .news>.nt{top:auto;bottom:9px;right:9px}
+/* 整卡角标落在右下角，与"已关联 N 只标的"同排，给该行留出空位避免叠字 */
+body.notes .news .acts{padding-right:26px}
+/* 收藏按钮自身已是定位元素，角标改挂其右下，避开 ☆ 字形 */
+body.notes .fav>.nt{top:auto;bottom:-8px;right:-8px}
+body.notes [data-note]{outline:1px dashed color-mix(in srgb,var(--s2) 45%,transparent);outline-offset:3px}
+body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
+#noteBtn.on{background:var(--s2);border-color:var(--s2);color:#fff}
+#noteBtn.on:hover{filter:brightness(1.08)}
+
+/* ---------- 标签词云 ---------- */
+.cloud{display:flex;flex-wrap:wrap;gap:1px 11px;align-items:baseline;padding:6px 0 2px}
+.cw{font-weight:650;letter-spacing:-.2px;line-height:1.3;cursor:default;transition:opacity .15s}
+.cw:hover{opacity:.65}
+.cloudtbl{width:100%;border-collapse:collapse;font-size:12px}
+.cloudtbl td{padding:5px 0;border-bottom:1px solid var(--border)}
+.cloudtbl tr:last-child td{border-bottom:0}
+.cloudtbl .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);font-weight:600}
+.cloudtbl .cat{font-size:11px;color:var(--ink-3)}
+
+/* ---------- 交接清单 ---------- */
+.notegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px;align-items:start}
+.notecard{padding:16px 18px}
+.notecard h3{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.notecard h3 .cnt{font-size:11px;font-weight:500;color:var(--ink-3)}
+.noterow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;padding:11px 0;
+  border-top:1px solid var(--border);align-items:start}
+.noterow:first-of-type{border-top:0}
+.noterow .no{width:19px;height:19px;border-radius:9.5px;background:var(--s2);color:#fff;
+  font-size:10.5px;font-weight:700;display:grid;place-items:center;margin-top:1px;
+  font-variant-numeric:tabular-nums;flex:none}
+.noterow .el{font-size:12.5px;font-weight:650;margin-bottom:3px}
+.noterow .tx{font-size:12.5px;color:var(--ink-2);line-height:1.65}
+.noterow .tx code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:11.5px}
+</style>
+</head>
+<body>
+
+<!-- ================= 顶栏 ================= -->
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">智</div>
+    <div>财讯智析 FinSight<div class="sub">财经新闻 · 影响推演工作台</div></div>
+  </div>
+  <!-- data-note 挂在 .searchbox 而非 input 上：input 是空元素，无法承载角标 -->
+  <div class="searchbox" data-note="feed-search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="feedSearch" placeholder="搜索快讯 / 股票代码 / 标签…">
+  </div>
+  <div class="spacer"></div>
+  <span class="mkt-tag" id="mktTag">—</span>
+  <span class="demo-tag" id="dataModeTag">● 正在连接真实数据…</span>
+  <button class="btn sm" id="noteBtn" title="显示/隐藏「待补充内容」开发标注">✎ 开发标注</button>
+  <button class="icon-btn" id="themeBtn" title="切换深浅色">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 3a9 9 0 109 9 7 7 0 01-9-9z"/></svg>
+  </button>
+  <div class="avatar">SD</div>
+</header>
+
+<div class="shell">
+  <!-- ================= 侧栏 ================= -->
+  <nav class="sidebar">
+    <div class="nav-label">工作流</div>
+    <div class="nav-item active" data-screen="feed"><span class="ico">◧</span>快讯流<span class="badge" id="navCount">6</span></div>
+    <div class="nav-item" data-screen="analysis"><span class="ico">◈</span>智能分析</div>
+    <div class="nav-item" data-screen="review"><span class="ico">↻</span>复盘校验</div>
+    <div class="nav-item" data-screen="import"><span class="ico">⊕</span>新闻导入<span class="badge" id="navImp">1</span></div>
+    <div class="nav-label">工具</div>
+    <div class="nav-item" data-screen="calendar"><span class="ico">▦</span>开市日历</div>
+    <div class="nav-item" data-screen="notes"><span class="ico">✎</span>开发交接<span class="badge" id="navNoteN">0</span></div>
+    <div class="src-panel">
+      <div class="nav-label">数据源</div>
+      <div class="src-row"><span class="dot ok" id="ifindNewsDot"></span><span id="ifindNewsSource">iFinD · 财经新闻</span></div>
+      <div class="src-row"><span class="dot warn" id="ifindQuoteDot"></span><span id="ifindQuoteSource">iFinD · 行情待查询</span></div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ================= 快讯流 ================= -->
+    <section class="screen active" id="s-feed">
+      <div class="page-head">
+        <div>
+          <h1>快讯流</h1>
+          <div class="desc" id="feedDesc">iFinD 财经新闻 · 最近3天（含今天）· AI按需分析 · 正在读取最新新闻</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" id="feedRefreshBtn" data-note="feed-refresh">⟳ 手动刷新</button>
+          <button class="btn sm primary" data-note="feed-export">导出今日清单</button>
+        </div>
+      </div>
+
+      <!-- 筛选行：统一作用于下方全部内容 -->
+      <div class="filterbar">
+        <label>日期</label>
+        <div class="pop" id="datePop" data-note="feed-datepicker">
+          <button class="btn sm" id="dateBtn">全部日期 ▾</button>
+          <div class="pop-panel scroll" id="datePanel"></div>
+        </div>
+
+        <label>信息重要度</label>
+        <div class="seg" data-filter="stars" data-note="feed-stars">
+          <button class="on" data-v="0">全部</button>
+          <button data-v="1"><span class="st">★</span>1</button>
+          <button data-v="2"><span class="st">★</span>2</button>
+          <button data-v="3"><span class="st">★</span>3</button>
+          <button data-v="4"><span class="st">★</span>4</button>
+          <button data-v="5"><span class="st">★</span>5</button>
+        </div>
+
+        <!-- 角标挂在 selwrap 上：select 只能含 option，挂在其上会被解析丢弃 -->
+        <span class="selwrap" data-note="feed-tagfilter">
+          <select class="select" data-filter="tag">
+            <option value="all">全部标签</option>
+            <option>宏观政策</option><option>新能源</option><option>储能</option>
+            <option>海外宏观</option><option>半导体</option><option>消费</option>
+            <option>医药</option><option>银行</option>
+          </select>
+        </span>
+
+        <div class="spacer" style="flex:1"></div>
+
+        <button class="btn sm" id="favFilterBtn" data-note="feed-favfilter">★ 仅看收藏</button>
+        <span class="selwrap" data-note="feed-sort">
+          <select class="select" data-filter="sort">
+            <option value="time">按时间倒序</option>
+            <option value="stars">按信息重要度</option>
+          </select>
+        </span>
+      </div>
+
+      <div class="feed-grid">
+        <div class="feed-col">
+          <div class="feedlist scroll" id="feedList"></div>
+        </div>
+
+        <aside class="rail-col">
+          <div class="stat-grid">
+            <div class="stat"><div class="k">当前命中</div><div class="v tnum" id="stTotal">6</div><div class="d" id="stTotalD">最近3天新闻</div></div>
+            <div class="stat"><div class="k">其中高重要度</div><div class="v tnum" id="stHot">3</div><div class="d">≥4★，优先查看</div></div>
+            <div class="stat"><div class="k">我的收藏</div><div class="v tnum" id="stFav">0</div><div class="d">条快讯</div></div>
+            <div class="stat"><div class="k">涉及个股</div><div class="v tnum" id="stStocks">—</div><div class="d">去重后</div></div>
+          </div>
+
+          <div class="card" style="padding:14px">
+            <div class="sec-title" style="margin-bottom:10px">开市日历 · 本周</div>
+            <div class="weekstrip" id="weekStrip"></div>
+            <div class="muted" style="font-size:11px;margin-top:9px;line-height:1.5" id="weekNote"></div>
+          </div>
+
+          <div class="card" data-note="feed-hot">
+            <div class="sec-title" style="padding:13px 14px 0;margin-bottom:6px">信息重要度榜</div>
+            <div class="hotlist scroll" id="hotList"></div>
+          </div>
+
+          <div class="card" style="padding:14px" data-note="feed-wordcloud">
+            <div class="sec-title" style="margin-bottom:6px">
+              标签词云
+              <button class="btn sm" id="cloudToggle" style="margin-left:auto;font-weight:400">表格</button>
+            </div>
+            <div id="cloudWrap"></div>
+            <div class="cal-legend" id="cloudLegend" style="margin-top:12px">
+              <span class="li"><span class="sw" style="background:var(--s1)"></span>政策 / 宏观</span>
+              <span class="li"><span class="sw" style="background:var(--s2)"></span>行业 / 产业</span>
+              <span class="li"><span class="sw" style="background:var(--s3)"></span>海外 / 资金</span>
+            </div>
+            <div class="muted" style="font-size:11px;margin-top:8px;line-height:1.5">
+              字号表示出现次数；统计口径：全库近 7 日 · 示例数据
+            </div>
+          </div>
+        </aside>
+      </div>
+      <div class="footer">
+        <span>示例数据仅用于界面评审，非真实行情与真实快讯。数据源入口：华尔街见闻 wallstreetcn.com/live（已实测可访问）</span>
+        <span>FinSight · 财经新闻分析</span>
+      </div>
+    </section>
+
+    <!-- ================= 新闻导入 ================= -->
+    <section class="screen" id="s-import">
+      <div class="page-head">
+        <div>
+          <h1>新闻导入</h1>
+          <div class="desc">导入自采或第三方新闻，完成打标确认后进入快讯流与推演队列</div>
+        </div>
+        <button class="btn sm primary" id="importTagBtn" data-note="imp-confirm">开始打标</button>
+      </div>
+
+      <div class="imp-grid">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card impbox">
+            <div class="tabs" id="impTabs">
+              <button class="on" data-tab="link">粘贴链接</button>
+            </div>
+
+            <div id="tab-link">
+              <textarea id="importLink" style="min-height:128px" placeholder="粘贴公开新闻链接，一行一条，支持批量（最多 5 条）"></textarea>
+              <div class="muted" style="font-size:11.5px;margin-top:8px">系统会抓取网页内容，并由 DeepSeek 提取标题、摘要、来源、发布时间和关键实体。</div>
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+              <button class="btn sm primary" id="importBtn" data-note="imp-parse">解析并入库</button>
+              <button class="btn sm" id="importClearBtn">清空</button>
+              <span class="muted" id="importStatus" style="font-size:11.5px">入库后状态为“待打标”，需确认标签与信息重要度</span>
+            </div>
+          </div>
+
+          <div class="card" style="padding:16px 18px" data-note="imp-table">
+            <div class="sec-title">导入记录</div>
+            <div class="tblwrap scroll">
+              <table class="tbl">
+                <thead><tr>
+                  <th>标题</th><th>原链接</th><th>导入方式</th><th>导入时间</th><th>状态</th><th>信息重要度</th><th class="num">操作</th>
+                </tr></thead>
+                <tbody id="impBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <aside style="display:flex;flex-direction:column;gap:16px">
+          <div class="card" style="padding:16px 18px">
+            <div class="sec-title">导入后会发生什么</div>
+            <div class="step"><span class="n">1</span><div class="t"><b>解析</b>抽取标题、主体、发布时间与关键实体（公司、行业、机构）。</div></div>
+            <div class="step"><span class="n">2</span><div class="t"><b>打标</b>给出候选标签与 1–5 星信息重要度，<span class="muted">需人工确认后才生效</span>。</div></div>
+            <div class="step"><span class="n">3</span><div class="t"><b>入流</b>确认后并入快讯流，出现在对应日期的列表中。</div></div>
+            <div class="step"><span class="n">4</span><div class="t"><b>推演</b>在「智能分析」中手动发起产业链传导推演。</div></div>
+          </div>
+
+          <div class="card" style="padding:16px 18px">
+            <div class="sec-title">今日导入</div>
+            <div class="stat" style="padding:0;background:transparent">
+              <div class="k">待打标</div><div class="v tnum" id="impPending">1</div>
+              <div class="d">确认标签后才会进入快讯流</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:16px 18px">
+            <div class="sec-title">打标规范</div>
+            <div class="muted" style="font-size:12.5px;line-height:1.7">
+              信息重要度表示新闻的优先处理价值，依据新鲜度、来源、事件实质性、A股传导、证据完整度和多来源确认计算。<b style="color:var(--ink)">5 星不代表必涨、必跌或高收益概率</b>。
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= 智能分析 ================= -->
+    <section class="screen" id="s-analysis">
+      <div class="page-head">
+        <div>
+          <h1>智能分析</h1>
+          <div class="desc">对选定快讯做产业链传导推演 · 输出受影响标的与影响方向 · 点击任一标的查看日 K</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" id="backToFeed">← 返回快讯流</button>
+          <button class="btn sm" id="anaRun" data-note="ana-reanalyze">开始 AI 分析</button>
+          <button class="btn sm primary" data-note="ana-track">加入复盘跟踪</button>
+        </div>
+      </div>
+
+      <div class="ana-grid">
+        <div class="card src-doc scroll">
+          <div class="sec-title">源快讯</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <span class="chip src" id="docSrc">—</span>
+            <span class="stars" id="docStars"></span>
+          </div>
+          <div style="font-size:15px;font-weight:640;line-height:1.55" id="docTitle"></div>
+          <div class="full" id="docFull"></div>
+          <div id="aiAction" style="margin:12px 0 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <button class="btn sm primary" id="aiRunInline">开始 AI 分析</button>
+            <span class="muted" id="aiStatus" style="font-size:12px">摘要已加载，点击后调用 DeepSeek。</span>
+          </div>
+          <div class="kv"><span>发布时间</span><span class="tnum" id="docDate">—</span></div>
+          <div class="kv"><span>标签</span><span id="docTags" style="text-align:right"></span></div>
+          <div class="kv"><span>原文链接</span><a id="docLink" target="_blank" rel="noopener"
+             style="color:var(--accent-ink);font-weight:600">打开原文 ↗</a></div>
+        </div>
+
+        <div>
+          <div class="verdict" id="verdict">
+            <div>
+              <div class="muted" style="font-size:11.5px;letter-spacing:.4px;margin-bottom:6px">推演结论 · 仅给方向</div>
+              <div class="lead" id="vdLead"></div>
+            </div>
+            <div class="gauge">
+              <span class="chip up" id="vdDir">—</span>
+              <div class="meter">
+                <div class="track"><div class="fill" id="vdBar" style="width:0%"></div></div>
+                <div class="lab"><span>方向置信度</span><span class="tnum" id="vdConf">0%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:16px 18px;margin-bottom:16px" data-note="ana-industries">
+            <div class="sec-title">可能受影响的行业</div>
+            <div id="industryList" class="muted" style="font-size:12.5px;line-height:1.7">点击“开始 AI 分析”后显示行业判断。</div>
+          </div>
+
+          <div class="card chain" data-note="ana-chain">
+            <div class="sec-title">产业链传导路径</div>
+            <div class="chain-cols scroll" id="chainCols"></div>
+          </div>
+
+          <div class="card" style="padding:16px 18px;margin-bottom:16px" data-note="ana-table">
+            <div class="sec-title">受影响标的清单 <span class="muted" style="font-weight:400;font-size:11px">（点击行查看日 K）</span></div>
+            <div class="tblwrap scroll">
+              <table class="tbl" id="tbl">
+                <thead><tr>
+                  <th>标的</th><th>环节</th><th>影响程度</th><th>影响方向</th>
+                  <th class="num">方向置信度</th><th class="num">最新价</th>
+                </tr></thead>
+                <tbody id="tblBody"></tbody>
+              </table>
+            </div>
+            <div class="muted" style="font-size:11.5px;margin-top:10px">
+              本清单只给方向（利好 / 利空 / 中性），不给目标价与涨跌幅预测。
+            </div>
+          </div>
+
+          <div class="card reason">
+            <div class="sec-title">推理解释</div>
+            <ol id="reasonOl"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 复盘校验 ================= -->
+    <section class="screen" id="s-review">
+      <div class="page-head">
+        <div>
+          <h1>复盘校验</h1>
+          <div class="desc">以每日 15:00 收盘为界限，比对推演方向与实际涨跌方向的出入。只评方向，不评幅度</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div class="pop" id="rvPop" data-note="rv-datepicker">
+            <button class="btn sm" id="rvBtn">复盘日 ▾</button>
+            <div class="pop-panel scroll" id="rvPanel"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="window" data-note="rv-window">
+        <b>复盘区间</b>
+        <span class="tnum" id="winFrom">—</span><span>→</span><span class="tnum" id="winTo">—</span>
+        <span class="muted" id="winNote"></span>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><div class="k">覆盖快讯</div><div class="v tnum" id="rvNewsN">—</div><div class="d">区间内全部快讯</div></div>
+        <div class="tile"><div class="k">推演标的</div><div class="v tnum" id="rvN">—</div><div class="d">已去重</div></div>
+        <div class="tile"><div class="k">方向命中率</div><div class="v tnum" id="rvHit">—</div><div class="d" id="rvHitD">—</div></div>
+        <div class="tile"><div class="k">漏判（应为中性/反向）</div><div class="v tnum" id="rvMiss">—</div><div class="d">需重点复盘的样本</div></div>
+      </div>
+
+      <div class="review-grid">
+        <div class="card" style="padding:16px 18px;display:flex;flex-direction:column" data-note="rv-matrix">
+          <div class="sec-title">方向命中矩阵 <span class="muted" style="font-weight:400;font-size:11px">（行为推演方向，列为实际方向）</span></div>
+          <div id="matrix"></div>
+          <div class="cal-legend" style="margin-top:14px">
+            <span class="li"><span class="sw" style="background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)"></span>对角线 = 方向判对</span>
+            <span class="li"><span class="sw" style="background:var(--surface-2);border:1px solid var(--border)"></span>非对角线 = 方向判错</span>
+            <span class="li">色深表示标的数量，数字同见表</span>
+          </div>
+        </div>
+
+        <div class="card miss" style="display:flex;flex-direction:column">
+          <div class="sec-title">出入分析</div>
+          <div id="missList" class="scroll"></div>
+          <div class="muted" style="font-size:11.5px;line-height:1.65;margin-top:auto;
+               padding-top:14px;border-top:1px solid var(--border)">
+            判定口径：推演方向与实际方向一致记为命中。实际涨跌幅绝对值小于
+            <b class="tnum">0.35%</b> 记为「持平」。此为占位阈值，需按板块波动率分别设定。
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px 18px;margin-top:20px" data-note="rv-table">
+        <div class="sec-title">明细对照表 <span class="muted" style="font-weight:400;font-size:11px">（矩阵的表格视图）</span></div>
+        <div class="tblwrap scroll">
+          <table class="tbl">
+            <thead><tr>
+              <th>标的</th><th>推演方向</th><th>实际方向</th><th class="num">实际涨跌幅</th>
+              <th>判定</th><th>主要出入</th>
+            </tr></thead>
+            <tbody id="reviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 开市日历 ================= -->
+    <section class="screen" id="s-calendar">
+      <div class="page-head">
+        <div>
+          <h1>开市日历</h1>
+          <div class="desc">沪深交易所交易日 · <b>调休补班的周末同样休市</b>，这是最常见的误判点</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" id="calToday">回到本月</button>
+          <button class="btn sm" data-note="cal-ics">订阅日历（.ics）</button>
+        </div>
+      </div>
+
+      <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="tile"><div class="k">本月交易日</div><div class="v tnum" id="calOpenN">—</div><div class="d" id="calMonthLabel">—</div></div>
+        <div class="tile"><div class="k">休市</div><div class="v tnum" id="calClosedN">—</div><div class="d">含周末与法定节假日</div></div>
+        <div class="tile" data-note="cal-next"><div class="k">下一交易日</div><div class="v" id="calNext" style="font-size:22px">—</div><div class="d" id="calNextD">—</div></div>
+      </div>
+
+      <div class="card" style="padding:18px" data-note="cal-data">
+        <div class="cal-hd">
+          <div class="m" id="calTitle">—</div>
+          <div class="cal-nav">
+            <button id="calPrev" title="上个月">‹</button>
+            <button id="calNextBtn" title="下个月">›</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend">
+          <span class="li"><span class="sw" style="background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)"></span>开市（交易日）</span>
+          <span class="li"><span class="sw" style="background:var(--surface-3)"></span>周末休市</span>
+          <span class="li"><span class="sw" style="background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)"></span>法定节假日休市</span>
+          <span class="li"><span class="sw" style="background:var(--up-soft);border:1px solid color-mix(in srgb,var(--up) 40%,transparent)"></span>调休上班（仍休市）</span>
+          <span class="li"><span class="dt" style="background:var(--ink-2)"></span>有快讯</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px 18px;margin-top:18px">
+        <div class="sec-title">2026 年休市安排</div>
+        <div class="tblwrap scroll">
+          <table class="tbl">
+            <thead><tr><th>假期</th><th>放假日期</th><th>天数</th><th>调休上班日（<span style="color:var(--up)">仍休市</span>）</th></tr></thead>
+            <tbody id="holidayBody"></tbody>
+          </table>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:10px">
+          来源：国务院办公厅《关于2026年部分节假日安排的通知》（国办发明电〔2025〕7号）。
+          调休上班日虽是工作日，但沪深交易所不安排交易，因此仍计为休市。
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 开发交接 ================= -->
+    <section class="screen" id="s-notes">
+      <div class="page-head">
+        <div>
+          <h1>开发交接</h1>
+          <div class="desc">界面中每个可点击元素对应的「待补充内容」清单 · 用于数据接入与逻辑实现</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" id="noteToggle2">隐藏界面标注</button>
+          <button class="btn sm primary">导出为 Markdown</button>
+        </div>
+      </div>
+
+      <div class="window" style="margin-bottom:18px">
+        <b>怎么用</b>
+        <span>打开右上角「✎ 开发标注」后，界面里每个需要补逻辑的元素上会出现与下方编号对应的角标，鼠标悬停可看简短说明；此处是完整清单。</span>
+      </div>
+
+      <div class="notegrid" id="noteBody"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ================= 导入打标确认 ================= -->
+<div class="modal-scrim" id="importModalScrim" aria-hidden="true">
+  <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+    <div class="modal-head">
+      <div>
+        <div class="modal-eyebrow">导入新闻确认</div>
+        <h2 id="importModalTitle">—</h2>
+      </div>
+      <button class="icon-btn" id="importModalClose" title="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-meta" id="importModalMeta"></div>
+      <div class="import-summary" id="importModalSummary"></div>
+      <div class="modal-note" id="importModalStatus" role="status" style="margin:0 0 12px"></div>
+      <button class="btn sm" id="importSummaryRetry" type="button" hidden>重新生成摘要</button>
+      <div class="import-entities" id="importModalEntities"></div>
+      <div class="form-grid">
+        <label>
+          <span>新闻标签</span>
+          <select id="importTagSelect"></select>
+        </label>
+        <label>
+          <span>发布时间</span>
+          <input type="text" id="importDateInput" placeholder="YYYY-MM-DD 或 YYYY-MM-DD HH:mm">
+        </label>
+      </div>
+      <div class="importance-picker">
+        <div class="label">信息重要度</div>
+        <div class="star-pick" id="importStarPick" aria-label="选择信息重要度"></div>
+        <div class="muted" id="importImportanceReason"></div>
+      </div>
+      <div class="modal-note">确认后才会进入快讯流。影响方向、行业和候选股票仍需在“智能分析”中手动生成。</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="importModalCancel">取消</button>
+      <button class="btn primary" id="importConfirmBtn">确认并进入快讯流</button>
+    </div>
+  </section>
+</div>
+
+<!-- ================= K线抽屉 ================= -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-hd">
+    <div>
+      <div style="display:flex;align-items:center;gap:9px">
+        <span class="nm" id="kName">—</span><span class="code" id="kCode">—</span>
+        <span class="chip flat" id="kStage">—</span>
+      </div>
+      <div class="muted" style="font-size:11.5px;margin-top:2px" id="kSub">日 K · 前复权 · 示例数据</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:baseline;gap:10px">
+      <span class="px tnum" id="kPx">—</span>
+      <span class="chip up" id="kChg">—</span>
+    </div>
+    <button class="icon-btn" id="drawerClose" title="关闭">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="drawer-bd">
+    <div class="kwrap" id="kwrap" data-note="kline-drawer">
+      <div class="klegend">
+        <span class="li"><span class="sw" style="background:var(--accent)"></span>MA5</span>
+        <span class="li"><span class="sw" style="background:var(--s2)"></span>MA10</span>
+        <span class="li"><span class="sw" style="background:var(--s3)"></span>MA20</span>
+        <span class="li muted" style="margin-left:auto">红涨绿跌（A 股惯例）· 阳线空心</span>
+      </div>
+      <div id="kSvg"></div>
+      <div class="tip" id="kTip"></div>
+    </div>
+
+    <div class="card" style="padding:16px 18px;margin-top:16px">
+      <div class="sec-title">该标的在本次传导中的角色</div>
+      <div id="kRole" style="font-size:13px;line-height:1.7;color:var(--ink-2)"></div>
+    </div>
+
+    <div class="card" style="padding:16px 18px;margin-top:16px">
+      <div class="sec-title">近 5 个交易日</div>
+      <table class="tbl">
+        <thead><tr><th>日期</th><th class="num">开盘</th><th class="num">最高</th><th class="num">最低</th><th class="num">收盘</th><th class="num">涨跌幅</th></tr></thead>
+        <tbody id="kTable"></tbody>
+      </table>
+    </div>
+  </div>
+</aside>
+
+<script>
+/* ============================================================
+   0. 工具
+   ============================================================ */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const pad = n => String(n).padStart(2,'0');
+const fmtD = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseD = s => new Date(s+'T00:00:00');
+const WD = '日一二三四五六';
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+
+/* 日期统一按中国时区计算，不再写死某一天。新闻本身的发布时间仍以 iFinD 返回值为准。 */
+function todayInShanghai(){
+  const parts=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const get=type=>parts.find(part=>part.type===type)?.value||'';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+let TODAY = todayInShanghai();
+
+/* ============================================================
+   1. 交易日历
+   来源：国务院办公厅《关于2026年部分节假日安排的通知》
+        （国办发明电〔2025〕7号）
+   关键规则：调休补班的周末，沪深交易所不安排交易 → 仍为休市
+   ============================================================ */
+const HOLIDAY_RANGES = [
+  ['2026-01-01','2026-01-03','元旦'],
+  ['2026-02-15','2026-02-23','春节'],
+  ['2026-04-04','2026-04-06','清明节'],
+  ['2026-05-01','2026-05-05','劳动节'],
+  ['2026-06-19','2026-06-21','端午节'],
+  ['2026-09-25','2026-09-27','中秋节'],
+  ['2026-10-01','2026-10-07','国庆节'],
+];
+const MAKEUP_DAYS = ['2026-01-04','2026-02-14','2026-02-28','2026-05-09','2026-09-20','2026-10-10'];
+
+/* 假期 → 所属调休上班日。直接照抄通知原文的归属，不做日期邻近推算
+   （春节的 2/14 在假期开始前、国庆的 9/20 在假期开始前，按邻近推算会漏掉） */
+const HOLIDAY_TABLE = [
+  ['元旦',  '2026-01-01','2026-01-03',['2026-01-04']],
+  ['春节',  '2026-02-15','2026-02-23',['2026-02-14','2026-02-28']],
+  ['清明节','2026-04-04','2026-04-06',[]],
+  ['劳动节','2026-05-01','2026-05-05',['2026-05-09']],
+  ['端午节','2026-06-19','2026-06-21',[]],
+  ['中秋节','2026-09-25','2026-09-27',[]],
+  ['国庆节','2026-10-01','2026-10-07',['2026-09-20','2026-10-10']],
+];
+
+const HOLIDAYS = {};
+HOLIDAY_RANGES.forEach(([a,b,name])=>{
+  for(let d=parseD(a); d<=parseD(b); d.setDate(d.getDate()+1)) HOLIDAYS[fmtD(d)] = name;
+});
+const MAKEUP = Object.fromEntries(MAKEUP_DAYS.map(d=>[d, true]));
+
+/* 返回某日的市场状态 */
+function mkt(ds){
+  const w = parseD(ds).getDay();
+  if (HOLIDAYS[ds]) return {open:false, kind:'holiday', label:HOLIDAYS[ds]+'休市'};
+  if (w===0||w===6) return MAKEUP[ds]
+    ? {open:false, kind:'makeup', label:'调休上班 · 仍休市'}
+    : {open:false, kind:'weekend', label:'周末休市'};
+  return {open:true, kind:'open', label:'开市'};
+}
+function isTradingDay(ds){ return mkt(ds).open; }
+function prevTradingDay(ds){
+  const d = parseD(ds);
+  do { d.setDate(d.getDate()-1); } while(!isTradingDay(fmtD(d)));
+  return fmtD(d);
+}
+function nextTradingDay(ds){
+  const d = parseD(ds);
+  do { d.setDate(d.getDate()+1); } while(!isTradingDay(fmtD(d)));
+  return fmtD(d);
+}
+function tradingDates(n,endISO){
+  const out=[]; const d=parseD(endISO);
+  while(out.length<n){ const s=fmtD(d); if(isTradingDay(s)) out.unshift(s); d.setDate(d.getDate()-1); }
+  return out;
+}
+function latestClosedTradingDay(){
+  const nowParts=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+  const hour=Number(nowParts.find(part=>part.type==='hour')?.value||0);
+  const minute=Number(nowParts.find(part=>part.type==='minute')?.value||0);
+  const todayOpen=isTradingDay(TODAY);
+  if(todayOpen && hour*60+minute>=15*60) return TODAY;
+  return prevTradingDay(TODAY);
+}
+let LAST_TD = latestClosedTradingDay();            // 动态计算最近一个已收盘交易日
+let DATES   = tradingDates(60, LAST_TD);
+
+/* ============================================================
+   2. 示例数据（全部为占位内容，非真实快讯与行情）
+   ============================================================ */
+const NEWS = [
+{
+  id:'n1', date:'2026-09-18', time:'09:12', source:'华尔街见闻', stars:5, fav:true,
+  title:'国家发改委：加快推进新型储能规模化应用，力争 2027 年全国新型储能装机规模达到 1.8 亿千瓦以上',
+  tags:['宏观政策'],
+  brief:'装机目标较此前规划上修，储能电池与 PCS 环节订单弹性最大；上游锂盐需求边际改善，电网侧运营商量价机制仍待落地。',
+  url:'https://wallstreetcn.com/live',
+  full:'国家发展改革委有关负责人在今日召开的新闻发布会上表示，将加快推进新型储能规模化应用，完善容量电价与辅助服务补偿机制，力争 2027 年全国新型储能装机规模达到 1.8 亿千瓦以上。会议要求各地抓紧制定配套实施细则，明确独立储能参与电力现货市场的准入条件与结算方式，并鼓励电源侧、电网侧、用户侧多元主体参与。',
+  conclusion:'储能装机目标上修，产业链从"政策预期"切换到"订单兑现"，弹性集中在中游电池与系统集成，上游锂盐受益于需求边际改善但价格弹性弱于 2022 年周期。',
+  dir:'up', conf:0.78,
+  chain:[
+    {stage:'上游', note:'锂盐 / 正极材料', items:[
+      {name:'赣锋锂业',code:'002460',dir:'up',stars:3,conf:0.62,px:38.42,chg:+1.85,seed:11,
+       role:'碳酸锂与氢氧化锂供应商。储能装机放量抬升锂盐需求预期，但当前行业库存仍偏高，价格传导偏慢，因此影响程度低于中游。'},
+      {name:'德方纳米',code:'300769',dir:'up',stars:3,conf:0.58,px:52.16,chg:+2.40,seed:12,
+       role:'磷酸铁锂正极材料厂商。储能电池以 LFP 路线为主，装机目标上修对其产能利用率构成直接正向拉动。'},
+    ]},
+    {stage:'直接', note:'储能电池 / 系统集成', items:[
+      {name:'宁德时代',code:'300750',dir:'up',stars:5,conf:0.81,px:246.80,chg:+4.80,seed:13,
+       role:'储能电池与系统集成龙头，国内大储份额领先。装机目标上修直接对应订单能见度提升，是本次传导链条中弹性最确定的环节。'},
+      {name:'阳光电源',code:'300274',dir:'up',stars:5,conf:0.79,px:112.35,chg:+7.10,seed:14,
+       role:'储能 PCS 与系统集成商，海外大储与国内独立储能双轮驱动。容量电价机制落地对其项目 IRR 影响最直接。'},
+      {name:'亿纬锂能',code:'300014',dir:'up',stars:4,conf:0.70,px:48.92,chg:+3.90,seed:15,
+       role:'储能电池二线主力，产能爬坡期叠加需求上修，出货量指引存在上修可能，但盈利弹性受价格竞争压制。'},
+    ]},
+    {stage:'下游', note:'电网侧 / 新能源运营', items:[
+      {name:'三峡能源',code:'600905',dir:'up',stars:3,conf:0.55,px:5.86,chg:+1.90,seed:16,
+       role:'新能源运营商，配套储能可改善其消纳与并网条件。影响偏间接，节奏取决于各省容量电价细则的落地速度。'},
+      {name:'南网储能',code:'600995',dir:'flat',stars:2,conf:0.44,px:13.24,chg:-0.60,seed:17,
+       role:'抽水蓄能与新型储能运营主体。政策利好与容量电价回收周期偏长的博弈并存，方向判断偏中性。'},
+    ]},
+  ],
+  reasoning:[
+    '<b>政策强度</b>：1.8 亿千瓦的 2027 年目标较此前市场普遍预期上修，且首次明确独立储能参与现货市场的准入与结算，属于"目标 + 机制"双重落地，而非单一表态。',
+    '<b>传导顺序</b>：装机目标直接对应设备招标量，因此中游电池与系统集成最先受益；上游锂盐需经过"招标 → 排产 → 采购"三段传导，通常滞后 1–2 个季度，且受库存周期稀释。',
+    '<b>下游偏中性</b>：运营商受益于并网条件改善，但容量电价回收周期长、初始资本开支大，短期利润弹性有限，故给出中性判断并降低置信度。',
+    '<b>风险提示</b>：细则落地节奏低于预期、锂价超预期下行压缩中游库存收益、行业价格战导致出货增长未能转化为利润。',
+  ]
+},
+{
+  id:'n2', date:'2026-09-18', time:'08:47', source:'华尔街见闻', stars:4, fav:false,
+  title:'美国 8 月核心 CPI 环比升 0.2% 低于预期，市场对年内降息押注升温',
+  tags:['宏观政策'],
+  brief:'美债利率与美元指数回落，人民币汇率压力缓解；外资风险偏好回升利好 A 股核心资产，出口链短期影响偏中性。',
+  url:'https://wallstreetcn.com/live',
+  full:'美国劳工部公布的数据显示，8 月核心 CPI 环比上升 0.2%，低于市场预期的 0.3%。数据公布后，美债收益率与美元指数同步回落，利率期货隐含的年内降息概率上升。',
+  conclusion:'海外流动性预期改善 → 人民币汇率压力缓解 → 外资偏好的稳定器效应，A 股核心资产与高股息板块受益，出口链相对偏中性。',
+  dir:'up', conf:0.66,
+  chain:[
+    {stage:'上游', note:'汇率 / 外资流向', items:[
+      {name:'贵州茅台',code:'600519',dir:'up',stars:4,conf:0.68,px:1682.00,chg:+2.10,seed:21,
+       role:'外资持仓占比高的核心资产，汇率企稳与外资回流对其估值分母端构成直接支撑。'},
+      {name:'中国平安',code:'601318',dir:'up',stars:3,conf:0.60,px:52.40,chg:+1.35,seed:22,
+       role:'大金融权重股，外资托管持仓集中。受益于全球风险偏好回升，但地产敞口制约估值弹性。'},
+    ]},
+    {stage:'直接', note:'利率敏感 / 高股息', items:[
+      {name:'长江电力',code:'600900',dir:'up',stars:3,conf:0.57,px:29.15,chg:+1.05,seed:23,
+       role:'类债属性突出，海外无风险利率回落提升其股息率的相对吸引力。'},
+      {name:'招商银行',code:'600036',dir:'up',stars:3,conf:0.54,px:38.76,chg:+1.62,seed:24,
+       role:'零售银行龙头，外资偏好的典型标的，但对国内息差走势的敏感度高于海外利率。'},
+    ]},
+    {stage:'下游', note:'出口链', items:[
+      {name:'海尔智家',code:'600690',dir:'flat',stars:2,conf:0.42,px:27.33,chg:-0.40,seed:25,
+       role:'海外收入占比高。人民币若阶段性走强，汇兑折算与价格竞争力形成反向作用，与外资流入的正向作用相互抵消。'},
+    ]},
+  ],
+  reasoning:[
+    '<b>核心变量</b>：低于预期的核心 CPI 直接压低海外无风险利率预期，属于分母端利好，对高估值、外资重仓资产的边际影响大于对盈利端的实质影响。',
+    '<b>传导路径</b>：海外利率 → 美元指数 → 人民币汇率 → 外资净流入 → 核心资产估值。链条较长，因此整体置信度低于国内直接政策类快讯。',
+    '<b>反向作用</b>：若人民币被动走强，出口链的汇兑与价格竞争力受损，与外资流入的利好方向相反，故对出口标的给出中性判断。',
+  ]
+},
+{
+  id:'n3', date:'2026-09-18', time:'08:05', source:'华尔街见闻', stars:3, fav:false,
+  title:'商务部就部分半导体设备出口管制措施作出回应，强调将采取必要措施维护企业合法权益',
+  tags:['行业动态'],
+  brief:'设备与零部件国产替代逻辑强化；成熟制程扩产受限或延缓，关注刻蚀、薄膜沉积环节的份额变化。',
+  url:'https://wallstreetcn.com/live',
+  full:'针对近期部分国家收紧半导体设备出口管制的措施，商务部新闻发言人表示，中方对此坚决反对，将采取必要措施维护中国企业的合法权益。',
+  conclusion:'方向分化明显：设备与零部件国产替代厂商偏多，依赖进口设备扩产的晶圆厂偏空，需按环节拆分判断，不宜整体定性。',
+  dir:'neutral', conf:0.52,
+  chain:[
+    {stage:'上游', note:'零部件 / 材料', items:[
+      {name:'北方华创',code:'002371',dir:'up',stars:4,conf:0.64,px:412.60,chg:+3.20,seed:31,
+       role:'刻蚀与薄膜沉积设备龙头，管制收紧强化下游客户的国产设备验证与导入意愿。'},
+      {name:'拓荆科技',code:'688072',dir:'up',stars:3,conf:0.56,px:186.40,chg:+2.05,seed:32,
+       role:'薄膜沉积设备厂商，受益于国产替代加速，但订单确认周期长于市场预期。'},
+    ]},
+    {stage:'直接', note:'晶圆制造', items:[
+      {name:'中芯国际',code:'688981',dir:'down',stars:3,conf:0.55,px:88.15,chg:-1.80,seed:33,
+       role:'成熟制程扩产若因设备获取受限而延缓，资本开支节奏将受影响，短期偏空；但成熟制程需求刚性提供一定缓冲。'},
+    ]},
+    {stage:'下游', note:'设计 / 封测', items:[
+      {name:'长电科技',code:'600584',dir:'flat',stars:2,conf:0.40,px:34.72,chg:-0.30,seed:34,
+       role:'封测环节，受设备管制直接影响有限，主要跟随行业景气度波动。'},
+    ]},
+  ],
+  reasoning:[
+    '<b>为什么不是全部利好</b>：出口管制对不同环节的作用方向相反。国产设备商获得替代份额（利好），而依赖进口设备的晶圆厂面临扩产延期（利空），统一给出"利好半导体"是常见的推演错误。',
+    '<b>事件性质</b>：本次为"回应"而非新增管制措施，属于既有预期的再确认，边际增量信息有限，因此整体置信度仅 0.52。',
+    '<b>观察指标</b>：后续看设备招标中本土供应商的中标份额、晶圆厂资本开支指引是否下修。',
+  ]
+},
+{
+  id:'n4', date:'2026-09-19', time:'07:38', source:'华尔街见闻', stars:4, fav:false,
+  title:'多地陆续发放新一轮消费券，覆盖餐饮、家电、汽车等品类',
+  tags:['宏观政策'],
+  brief:'餐饮链与可选消费边际改善，白酒动销验证仍需观察；家电以旧换新与汽车补贴对渠道库存影响偏正面。',
+  url:'https://wallstreetcn.com/live',
+  full:'据不完全统计，本周以来已有多个省市宣布发放新一轮消费券，覆盖餐饮、家电、汽车等品类，部分城市配套以旧换新补贴。',
+  conclusion:'直接受益的是渠道与终端零售，家电与汽车因客单价高、补贴杠杆明显，弹性大于餐饮；白酒依赖商务场景恢复，短期难由消费券直接拉动。',
+  dir:'up', conf:0.61,
+  chain:[
+    {stage:'上游', note:'品牌 / 制造', items:[
+      {name:'美的集团',code:'000333',dir:'up',stars:4,conf:0.66,px:76.90,chg:+2.60,seed:41,
+       role:'家电龙头，以旧换新与消费券叠加对其内销出货拉动直接，且渠道库存处于中低位。'},
+      {name:'比亚迪',code:'002594',dir:'up',stars:3,conf:0.58,px:268.40,chg:+1.75,seed:42,
+       role:'汽车补贴的受益方，但需注意补贴对需求的透支效应通常在未来 1–2 个季度体现。'},
+    ]},
+    {stage:'直接', note:'渠道 / 零售', items:[
+      {name:'重庆百货',code:'600729',dir:'up',stars:3,conf:0.55,px:24.18,chg:+3.10,seed:43,
+       role:'区域零售与家电连锁，消费券核销直接体现在其到店客流与客单价。'},
+      {name:'美团',code:'HK3690',dir:'up',stars:3,conf:0.53,px:118.60,chg:+1.40,seed:44,
+       role:'餐饮外卖与到店业务，消费券核销提升订单密度，但补贴成本分摊比例是利润的关键变量。'},
+    ]},
+    {stage:'下游', note:'场景消费', items:[
+      {name:'贵州茅台',code:'600519',dir:'flat',stars:2,conf:0.38,px:1682.00,chg:+0.55,seed:45,
+       role:'白酒动销依赖商务与宴席场景，消费券覆盖面与客单价均不匹配，短期拉动有限，判断偏中性。'},
+    ]},
+  ],
+  reasoning:[
+    '<b>补贴杠杆</b>：消费券对高客单价品类的边际撬动更大。家电与汽车的单笔补贴金额高，对购买决策的影响显著强于小额餐饮券。',
+    '<b>传导层级</b>：受益顺序为"渠道 → 品牌 → 上游零部件"。渠道最先感知客流变化，品牌商的出货改善通常滞后一个季度。',
+    '<b>为什么白酒偏中性</b>：消费券的适用场景以日常消费为主，与白酒的商务、宴席场景重合度低，不应简单归入"消费复苏利好"。',
+  ]
+},
+{
+  id:'n5', date:'2026-09-20', time:'09:26', source:'华尔街见闻', stars:2, fav:false,
+  title:'第十一批国家组织药品集中采购开标，涉及品种数量较上一批增加',
+  tags:['行业动态'],
+  brief:'仿制药企业盈利预期承压，创新药与 CXO 受影响有限；关注中标价格降幅对相关公司毛利率的边际影响。',
+  url:'https://wallstreetcn.com/live',
+  full:'第十一批国家组织药品集中采购于今日开标，涉及品种数量较上一批有所增加，涵盖多个大品种。',
+  conclusion:'集采为存量博弈事件，对仿制药企业的价格与毛利率构成直接压制，对创新药与 CXO 基本无直接传导，板块内部需严格区分。',
+  dir:'down', conf:0.63,
+  chain:[
+    {stage:'上游', note:'原料药', items:[
+      {name:'华海药业',code:'600521',dir:'down',stars:3,conf:0.58,px:18.62,chg:-2.15,seed:51,
+       role:'原料药与制剂一体化，若制剂端中标价大幅下探，一体化成本优势可部分对冲，但毛利率仍承压。'},
+    ]},
+    {stage:'直接', note:'仿制药制剂', items:[
+      {name:'中国生物制药',code:'HK1177',dir:'down',stars:4,conf:0.64,px:4.86,chg:-3.05,seed:52,
+       role:'仿制药收入占比高，集采品种若涉及其主要产品，收入与毛利率将同步承压。'},
+      {name:'恒瑞医药',code:'600276',dir:'flat',stars:2,conf:0.45,px:56.30,chg:-0.55,seed:53,
+       role:'已大幅降低仿制药收入占比，创新药管线为主，集采影响边际递减。'},
+    ]},
+    {stage:'下游', note:'流通 / CXO', items:[
+      {name:'上海医药',code:'601607',dir:'flat',stars:2,conf:0.40,px:21.45,chg:-0.80,seed:54,
+       role:'医药流通，集采压降的药品价格会拉低其配送收入基数，但配送量通常上升，整体影响中性。'},
+    ]},
+  ],
+  reasoning:[
+    '<b>事件性质</b>：集采是价格端的确定性压降，属于典型的存量博弈，对仿制药企业的影响方向明确但幅度取决于中标价降幅。',
+    '<b>区分板块内部</b>：市场常把"集采"整体解读为医药板块利空，但创新药与 CXO 的收入结构与集采品种基本不重叠，不应同步下调。',
+  ]
+},
+{
+  id:'n6', date:'2026-09-20', time:'08:22', source:'华尔街见闻', stars:3, fav:false,
+  title:'多家国有大行下调部分期限存款挂牌利率',
+  tags:['宏观政策'],
+  brief:'银行负债成本改善，但息差压力仍存；地产链融资环境边际宽松，关注销售数据验证。',
+  url:'https://wallstreetcn.com/live',
+  full:'多家国有大型银行于今日起下调部分期限的人民币存款挂牌利率，调整幅度与期限结构有所差异。',
+  conclusion:'负债成本改善对银行息差是慢变量利好，幅度小于资产端定价下行的压力；对地产链属于间接的融资环境改善信号，需销售数据验证。',
+  dir:'up', conf:0.55,
+  chain:[
+    {stage:'上游', note:'负债成本', items:[
+      {name:'工商银行',code:'601398',dir:'up',stars:3,conf:0.60,px:7.42,chg:+1.15,seed:61,
+       role:'存款成本改善直接缓解净息差压力，但资产端重定价节奏决定实际改善幅度，属于慢变量。'},
+      {name:'农业银行',code:'601288',dir:'up',stars:3,conf:0.58,px:5.68,chg:+0.95,seed:62,
+       role:'活期存款占比高，本轮存款利率下调对其计息负债成本的改善弹性相对更大。'},
+    ]},
+    {stage:'直接', note:'地产融资', items:[
+      {name:'保利发展',code:'600048',dir:'up',stars:3,conf:0.48,px:9.86,chg:+1.60,seed:63,
+       role:'融资环境边际宽松降低其综合融资成本，但销售端能否企稳才是估值的主导变量。'},
+    ]},
+    {stage:'下游', note:'按揭 / 居民端', items:[
+      {name:'招商银行',code:'600036',dir:'flat',stars:2,conf:0.42,px:38.76,chg:+0.35,seed:64,
+       role:'存款利率下调同步压低其负债成本，但按揭重定价亦压低资产收益，两端对冲后判断偏中性。'},
+    ]},
+  ],
+  reasoning:[
+    '<b>方向明确但幅度有限</b>：存款利率下调确定改善负债成本，但资产端 LPR 重定价与按揭利率下调形成对冲，净息差的实际改善幅度小于市场直觉。',
+    '<b>传导至地产是间接的</b>：存款利率下调本身不直接改善房企销售，其作用是降低银行负债成本后为资产端定价下探打开空间。',
+    '<b>节奏判断</b>：属于慢变量，通常在后续 2–3 个季度的财报中逐步体现，不适合作为短期交易信号。',
+  ]
+},
+];
+
+/* 导入记录由本地后端持久化，页面启动后读取。 */
+let IMPORTS = [];
+let activeImportRecord = null;
+let selectedImportStars = 0;
+
+/* 复盘数据：只记录方向，不记录预测涨跌幅
+   predDir / actDir ∈ up | flat | down
+   实际涨跌幅仅作为事后事实列示，不参与预测                     */
+const REVIEW = [
+  {name:'宁德时代',code:'300750',predDir:'up'  ,actPct:+4.80,why:'政策目标上修与出货指引的传导如期兑现。'},
+  {name:'阳光电源',code:'300274',predDir:'up'  ,actPct:+7.10,why:'容量电价机制首次明确，市场对其项目 IRR 的改善幅度给得比模型更乐观。'},
+  {name:'亿纬锂能',code:'300014',predDir:'up'  ,actPct:+3.90,why:'二线电池厂出货弹性逻辑被认可，方向与推演一致。'},
+  {name:'德方纳米',code:'300769',predDir:'up'  ,actPct:+2.20,why:'正极材料环节跟随上涨，方向正确但弹性弱于中游。'},
+  {name:'三峡能源',code:'600905',predDir:'up'  ,actPct:+1.90,why:'运营商标的走势平稳，符合"影响偏间接、弹性有限"的判断。'},
+  {name:'贵州茅台',code:'600519',predDir:'up'  ,actPct:+2.10,why:'汇率压力缓解与外资回流对核心资产的支撑如期兑现。'},
+  {name:'中国平安',code:'601318',predDir:'up'  ,actPct:+1.35,why:'全球风险偏好回升带动大金融权重股上行。'},
+  {name:'北方华创',code:'002371',predDir:'up'  ,actPct:+3.20,why:'管制收紧强化国产设备验证与导入预期。'},
+  {name:'中芯国际',code:'688981',predDir:'down',actPct:-1.80,why:'成熟制程扩产延缓的担忧被市场定价，利空判断成立。'},
+  {name:'长电科技',code:'600584',predDir:'flat',actPct:-0.30,why:'封测环节随行业景气度小幅波动，中性判断成立。'},
+  {name:'赣锋锂业',code:'002460',predDir:'up'  ,actPct:-1.20,why:'模型假设锂盐需求边际改善将带动股价，但当日有色板块整体走弱，且行业库存数据超预期偏高，个股未能兑现。属于"传导链条判断正确、但被板块系统性因素掩盖"。'},
+  {name:'南网储能',code:'600995',predDir:'flat',actPct:-0.60,why:'给出中性判断但实际小幅下跌。容量电价回收周期偏长这一负面因素被市场更充分地定价，模型对该因素权重给低了。'},
+  {name:'海尔智家',code:'600690',predDir:'flat',actPct:-0.40,why:'推演认为人民币走强对出口链的负面作用与外资流入的正面作用相抵，但实际汇率升值幅度大于预期，负面作用占上风。'},
+];
+const FLAT_BAND = 0.35;                       // |涨跌幅| < 0.35% 记为"持平"
+const DIR_LABEL = {up:'利好', down:'利空', flat:'中性'};
+const ACT_LABEL = {up:'上涨', down:'下跌', flat:'持平'};
+const dirOf = p => p >  FLAT_BAND ? 'up' : p < -FLAT_BAND ? 'down' : 'flat';
+
+/* ============================================================
+   3. 全局状态
+   ============================================================ */
+const state = {
+  filters:{ date:null, stars:0, tag:'all', sort:'time', favOnly:false },
+  favorites:new Set(NEWS.filter(n=>n.fav).map(n=>n.id)),
+  cal:{ y:Number(TODAY.slice(0,4)), m:Number(TODAY.slice(5,7))-1 },
+  pick:{ y:Number(TODAY.slice(0,4)), m:Number(TODAY.slice(5,7))-1 },
+  rvPick:{ y:Number(TODAY.slice(0,4)), m:Number(TODAY.slice(5,7))-1 },
+  reviewDate:LAST_TD,
+};
+const newsOn = ds => NEWS.filter(n=>n.date===ds);
+let dataMode = 'mock';
+let activeNewsId = null;
+
+const DIR_TO_UI = { '利好':'up', '利空':'down', '多空交织':'neutral', '不确定':'neutral' };
+const UI_TO_DIR = { up:'利好', down:'利空', neutral:'不确定' };
+const FIXED_TAGS = ['财报业绩','宏观政策','行业动态','商品与供应链','公司事件'];
+
+function confidenceNumber(value){
+  const n = Number(value);
+  if(!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n > 1 ? n / 100 : n));
+}
+function safeText(value, fallback=''){
+  const text = String(value ?? '').trim();
+  return text || fallback;
+}
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function safeUrl(value){
+  try{
+    const url = new URL(String(value || ''), window.location.href);
+    return /^https?:$/.test(url.protocol) ? url.href : '';
+  }catch(e){ return ''; }
+}
+function newsDateTime(item){
+  // 只读取 iFinD 的发布时间字段，不把 discovered（接口收到数据的时间）当成新闻发布时间。
+  const raw = safeText(item.published_at || item.time);
+  const date = (raw.match(/\d{4}-\d{2}-\d{2}/)||[])[0] || TODAY;
+  const time = (raw.match(/(?:T|\s)(\d{2}:\d{2})/)||[])[1] ||
+    ((safeText(item.time).match(/\d{2}:\d{2}/)||[])[0] || '');
+  const hasExactTime = ['date','imported'].includes(item.published_precision) ? false : Boolean(time);
+  return {date, time:hasExactTime ? time : '', hasExactTime, dateBasis:item.published_precision==='imported'?'imported':'published'};
+}
+function mapLiveNews(item, index){
+  const {date,time,hasExactTime,dateBasis} = newsDateTime(item);
+  const category = safeText(item.category, '财经新闻');
+  const summary = safeText(item.summary, '新闻摘要暂未提供。');
+  const source = safeText(item.source, 'iFinD');
+  const primarySource = Array.isArray(item.sources) && item.sources.length ? item.sources[0] : null;
+  const sourceUrl = safeUrl(item.url || (primarySource && (primarySource.url || primarySource.link)));
+  const tags = [...new Set([category, ...(Array.isArray(item.tags)?item.tags:[])].filter(Boolean))].slice(0,5);
+  return {
+    id: safeText(item.id, `live-${index}`), date, time, hasExactTime, dateBasis, source,
+    stars: Math.max(1, Math.min(5, Number(item.importance_stars || item.stars || item.impact_level || 3) || 3)),
+    importanceScore: Number(item.importance_score) || 0,
+    importanceLevel: safeText(item.importance_level, '中'),
+    importanceReasons: Array.isArray(item.importance_reasons) ? item.importance_reasons : [],
+    fav: false, title: safeText(item.title, '未命名新闻'), tags,
+    brief: summary, url: sourceUrl, full: summary,
+    conclusion:'摘要已加载，点击“开始 AI 分析”生成结构化结论。',
+    dir:'neutral', conf:0, chain:[], reasoning:[], industries:[],
+    aiAnalysis:null, live:true, summaryStatus:safeText(item.summary_status, 'fallback'), raw:item
+  };
+}
+function normalizeKlineForUi(analysis){
+  const map = new Map();
+  for(const item of (Array.isArray(analysis && analysis.kline) ? analysis.kline : [])){
+    const code = safeText(item.code || item.ticker);
+    if(code) map.set(code, item);
+  }
+  return map;
+}
+function stockToUi(stock, index, klineMap){
+  const code = safeText(stock.code || stock.ticker, '代码待核验');
+  const kline = klineMap.get(code);
+  const bars = Array.isArray(kline && kline.bars) ? kline.bars : [];
+  const last = bars[bars.length-1];
+  const prev = bars.length > 1 ? bars[bars.length-2] : null;
+  const close = Number(last && last.close);
+  const previousClose = Number(prev && prev.close);
+  const change = Number.isFinite(close) && Number.isFinite(previousClose) && previousClose !== 0
+    ? (close - previousClose) / previousClose * 100 : null;
+  const score = Number(stock.screening_score ?? stock.score);
+  return {
+    name:safeText(stock.name,'名称待核验'), code, ticker:code,
+    dir:DIR_TO_UI[stock.direction] || 'neutral',
+    stars:Number.isFinite(score) ? Math.max(1,Math.min(5,Math.round(score/2))) : 3,
+    conf:confidenceNumber(stock.confidence),
+    px:Number.isFinite(close) ? close : null,
+    chg:Number.isFinite(change) ? change : null,
+    seed:100+index, industry:safeText(stock.industry,'行业待判断'),
+    stage:safeText(stock.stage || stock.layer || stock.link_stage,'直接影响'),
+    role:safeText(stock.reason,'资料不足，暂不做方向判断。'),
+    risks:Array.isArray(stock.risks) ? stock.risks : [],
+    screening_reasons:Array.isArray(stock.screening_reasons) ? stock.screening_reasons : [],
+    kline:kline || null
+  };
+}
+function buildUiChain(analysis, candidates, klineMap){
+  const steps = Array.isArray(analysis && analysis.impact_chain) ? analysis.impact_chain : [];
+  const fallback = [
+    {title:'事件', detail:'新闻事件已识别，等待更多资料确认直接影响。'},
+    {title:'行业传导', detail:'结合供需、价格、成本或政策落地情况判断。'},
+    {title:'公司影响', detail:'需要后续公告、财务和行情数据验证。'}
+  ];
+  const cols = (steps.length ? steps : fallback).slice(0,3).map((step,index)=>({
+    stage:safeText(step.title || step.cause, ['事件','行业传导','公司影响'][index]),
+    note:safeText(step.detail || step.effect,'资料不足，暂不做确定判断。'), items:[]
+  }));
+  while(cols.length<3) cols.push({stage:['事件','行业传导','公司影响'][cols.length],note:'待补充',items:[]});
+  (Array.isArray(candidates)?candidates:[]).forEach((stock,index)=>{
+    const stage=safeText(stock.stage || stock.layer || stock.link_stage || stock.industry);
+    let ci = /上游|原料|材料|供应|设备/.test(stage) ? 0 : /下游|终端|运营|流通|消费/.test(stage) ? 2 : 1;
+    cols[ci].items.push(stockToUi(stock,index,klineMap));
+  });
+  return cols;
+}
+function applyAnalysisToNews(n, analysis){
+  const candidates = Array.isArray(analysis && analysis.candidate_stocks)
+    ? analysis.candidate_stocks : (Array.isArray(analysis && analysis.stocks) ? analysis.stocks : []);
+  const klineMap = normalizeKlineForUi(analysis);
+  const event = analysis && analysis.event || {};
+  const dir = DIR_TO_UI[event.direction || analysis.event_direction] || 'neutral';
+  n.aiAnalysis=analysis; n.dir=dir; n.conf=confidenceNumber(event.confidence);
+  n.conclusion=safeText(analysis.summary || analysis.risk_notice, '模型没有返回结论。');
+  n.industries=Array.isArray(analysis.industries) ? analysis.industries : [];
+  n.chain=buildUiChain(analysis,candidates,klineMap);
+  n.reasoning=Array.isArray(analysis.uncertainties) ? analysis.uncertainties.map(x=>`<b>不确定性</b>：${safeText(x)}`) : [];
+  n.rawAnalysis=analysis;
+  return n;
+}
+function updateLiveSourceUI(live){
+  const tag=$('#dataModeTag'), newsDot=$('#ifindNewsDot'), quoteDot=$('#ifindQuoteDot');
+  if(tag) tag.textContent=live?'● iFinD 实时新闻 · AI按需分析':'● 示例数据';
+  if(newsDot) newsDot.className=`dot ${live?'ok':'off'}`;
+  if(quoteDot) quoteDot.className=`dot ${live?'warn':'off'}`;
+  if($('#ifindNewsSource')) $('#ifindNewsSource').textContent=live?'iFinD · 财经新闻':'示例新闻数据';
+  if($('#ifindQuoteSource')) $('#ifindQuoteSource').textContent=live?'iFinD · 行情按需查询':'示例行情数据';
+}
+function syncTagOptions(){
+  const select=$('[data-filter="tag"]'); if(!select) return;
+  const current=select.value;
+  select.innerHTML='<option value="all">全部标签</option>'+FIXED_TAGS.map(tag=>`<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join('');
+  select.value=FIXED_TAGS.includes(current)?current:'all'; state.filters.tag=select.value;
+}
+function resetLiveFeedFilters(){
+  state.filters={date:null,stars:0,tag:'all',sort:'time',favOnly:false};
+  $('#dateBtn').textContent='全部日期 ▾';
+  $('#datePanel').classList.remove('on');
+  $$('.seg[data-filter="stars"] button').forEach(button=>button.classList.toggle('on',button.dataset.v==='0'));
+  $$('select[data-filter="sort"]').forEach(select=>{select.value='time';});
+  syncTagOptions();
+  syncFavUI();
+}
+function syncTodayState(){
+  const nextToday=todayInShanghai();
+  if(nextToday===TODAY) return false;
+  TODAY=nextToday;
+  LAST_TD=latestClosedTradingDay();
+  DATES=tradingDates(60, LAST_TD);
+  const year=Number(TODAY.slice(0,4)), month=Number(TODAY.slice(5,7))-1;
+  state.cal={y:year,m:month};
+  state.pick={y:year,m:month};
+  state.rvPick={y:year,m:month};
+  state.reviewDate=LAST_TD;
+  return true;
+}
+async function loadLiveNews(manual=false){
+  const button=$('#feedRefreshBtn');
+  const hadLive=dataMode==='live' && NEWS.some(item=>item.live);
+  syncTodayState();
+  if(manual && button){ button.disabled=true; button.textContent='⟳ 正在刷新…'; }
+  if(manual && $('#feedDesc')) $('#feedDesc').textContent='正在从 iFinD 新闻资讯模块读取最近3天新闻…';
+  try{
+    const response=await fetch(manual?'/api/news?refresh_feed=1':'/api/news',{cache:'no-store'});
+    const payload=await response.json();
+    if(!response.ok || payload.mode!=='live' || !Array.isArray(payload.items) || !payload.items.length) throw new Error('live_news_unavailable');
+    if(manual) resetLiveFeedFilters();
+    NEWS.splice(0,NEWS.length,...payload.items.map(mapLiveNews));
+    state.favorites.clear(); dataMode='live'; updateLiveSourceUI(true); syncTagOptions(); renderFeed();
+    renderMarketBits();
+    renderMarketCal();
+    if($('#datePanel').classList.contains('on')) renderDatePanel();
+    const summaryStats=payload.summary_stats||{};
+    const generated=Number(summaryStats.generated)||0;
+    const reused=Number(summaryStats.cache_hits)||0;
+    const fallback=Number(summaryStats.fallback)||0;
+    const summaryParts=[];
+    if(generated) summaryParts.push(`新生成 ${generated}`);
+    if(reused) summaryParts.push(`沿用 ${reused}`);
+    if(fallback) summaryParts.push(`原文 ${fallback}`);
+    const summaryNote=summaryParts.length?` · 摘要已整理（${summaryParts.join('，')}）`:' · 摘要使用原文';
+    const manualCount=Number(payload.manual_import_count)||0;
+    const requeuedCount=Number(payload.requeued_import_count)||0;
+    const sourceNote=manualCount?`iFinD近3天 · 人工导入 ${manualCount} 条`:'iFinD近3天';
+    const requeuedNote=requeuedCount?` · ${requeuedCount} 条人工导入已移回待重新打标`:'';
+    if($('#feedDesc')) $('#feedDesc').textContent=`财经新闻 · ${TODAY} · ${sourceNote} · 共 ${payload.items.length} 条${summaryNote}${requeuedNote} · 已更新 ${new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date())}`;
+    if(manual && requeuedCount) await loadImports();
+    if(activeNewsId && NEWS.some(n=>n.id===activeNewsId)) openAnalysis(activeNewsId);
+  }catch(error){
+    if(!hadLive){ dataMode='mock'; updateLiveSourceUI(false); renderFeed(); }
+    if($('#feedDesc')) $('#feedDesc').textContent=hadLive?'刷新失败，当前仍保留上次 iFinD 新闻。':'暂时无法连接 iFinD，当前显示示例数据。';
+  }finally{
+    if(manual && button){ button.disabled=false; button.textContent='⟳ 手动刷新'; }
+  }
+}
+
+/* ============================================================
+   4. 屏幕切换
+   ============================================================ */
+function showScreen(id){
+  $$('.screen').forEach(s=>s.classList.toggle('active', s.id==='s-'+id));
+  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===id));
+  $$('.pop-panel').forEach(p=>p.classList.remove('on'));
+  if(id==='calendar') renderMarketCal();
+  if(id==='review')   renderReview();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+$$('.nav-item[data-screen]').forEach(n=>n.addEventListener('click',()=>showScreen(n.dataset.screen)));
+$('#backToFeed').addEventListener('click',()=>showScreen('feed'));
+$('#themeBtn').addEventListener('click',()=>{
+  const cur=document.documentElement.dataset.theme;
+  document.documentElement.dataset.theme = cur==='light'?'dark':'light';
+});
+
+/* ============================================================
+   5. 通用日历组件
+   mode = 'news'    → 仅有快讯的日期可点
+   mode = 'trading' → 仅交易日可点
+   mode = 'market'  → 只读展示开市/休市
+   ============================================================ */
+function calendarHTML(mode, y, m, selected){
+  const first = new Date(y, m, 1);
+  const lead  = first.getDay();
+  const days  = new Date(y, m+1, 0).getDate();
+  let h = ['日','一','二','三','四','五','六']
+    .map(w=>`<div class="cal-wd">${w}</div>`).join('');
+
+  for(let i=0;i<lead;i++) h += '<div class="cal-d out"></div>';
+
+  for(let d=1;d<=days;d++){
+    const ds = `${y}-${pad(m+1)}-${pad(d)}`;
+    const hasNews = newsOn(ds).length>0;
+    const mk = mkt(ds);
+    let cls='cal-d', dis='', mark='';
+    if(selected===ds) cls+=' sel';
+    if(ds===TODAY)    cls+=' today';
+
+    if(mode==='news'){
+      if(!hasNews){ dis=' disabled'; cls+=' dis'; }        // 没有新闻的日期点不开
+      else mark = `<span class="mk"></span>`;
+    } else if(mode==='trading'){
+      if(!mk.open){ dis=' disabled'; }
+      if(mk.kind==='holiday') mark = `<span class="mk h"></span>`;
+      if(mk.kind==='makeup')  mark = `<span class="mk m"></span>`;
+    } else { // market：底色承载开市状态，圆点单独承载"有快讯"
+      if(mk.kind==='open'){          cls+=' m-open';    }
+      else if(mk.kind==='holiday')   cls+=' m-holiday';
+      else if(mk.kind==='makeup')    cls+=' m-makeup';
+      else                           cls+=' m-weekend';
+      // 休市日照样可能有快讯，且正是"无法当日交易"的关键情形，必须标出
+      if(hasNews) mark = `<span class="mk"></span>`;
+      dis=' disabled';                                     // 只读展示，不响应点击
+    }
+    h += `<button class="${cls}"${dis} data-d="${ds}" title="${mk?mk.label:''}">
+            <span>${d}</span>${mark}</button>`;
+  }
+  return h;
+}
+
+function bindCalendar(host, mode, onPick){
+  $$('.cal-d:not([disabled]):not(.out)', host).forEach(b=>b.addEventListener('click',()=>{
+    const ds=b.dataset.d;
+    if(mode==='news'   && newsOn(ds).length===0) return;   // 双保险
+    if(mode==='trading'&& !isTradingDay(ds))     return;
+    onPick(ds);
+  }));
+}
+
+function calHeader(y,m,{minY=2026,minM=0,maxY=2026,maxM=11}={}){
+  const atMin = (y===minY&&m===minM), atMax = (y===maxY&&m===maxM);
+  return `<div class="cal-hd"><div class="m">${y} 年 ${m+1} 月</div>
+    <div class="cal-nav">
+      <button data-nav="-1" ${atMin?'disabled':''}>‹</button>
+      <button data-nav="1" ${atMax?'disabled':''}>›</button>
+    </div></div>`;
+}
+
+/* ---- 快讯流：日期筛选 ---- */
+function renderDatePanel(){
+  const {y,m}=state.pick;
+  $('#datePanel').innerHTML =
+    calHeader(y,m) +
+    `<div class="cal-grid">${calendarHTML('news',y,m,state.filters.date)}</div>
+     <div class="cal-foot">
+       <span>仅可选有快讯的日期</span>
+       <button class="btn sm" data-clear="1">清除筛选</button>
+     </div>`;
+  $$('[data-nav]',$('#datePanel')).forEach(b=>b.addEventListener('click',()=>{
+    state.pick.m += +b.dataset.nav;
+    if(state.pick.m<0){state.pick.m=11;state.pick.y--;}
+    if(state.pick.m>11){state.pick.m=0;state.pick.y++;}
+    renderDatePanel();
+  }));
+  bindCalendar($('#datePanel'),'news',ds=>{
+    state.filters.date = ds;
+    $('#dateBtn').textContent = ds + ' ▾';
+    $('#datePanel').classList.remove('on');
+    renderFeed();
+  });
+  $('[data-clear]',$('#datePanel')).addEventListener('click',()=>{
+    state.filters.date=null;
+    $('#dateBtn').textContent='全部日期 ▾';
+    $('#datePanel').classList.remove('on');
+    renderFeed();
+  });
+}
+
+/* ---- 复盘：交易日选择 ---- */
+function renderRvPanel(){
+  const {y,m}=state.rvPick;
+  $('#rvPanel').innerHTML =
+    calHeader(y,m) +
+    `<div class="cal-grid">${calendarHTML('trading',y,m,state.reviewDate)}</div>
+     <div class="cal-foot"><span>仅可选交易日（调休上班日不可选）</span></div>`;
+  $$('[data-nav]',$('#rvPanel')).forEach(b=>b.addEventListener('click',()=>{
+    state.rvPick.m += +b.dataset.nav;
+    if(state.rvPick.m<0){state.rvPick.m=11;state.rvPick.y--;}
+    if(state.rvPick.m>11){state.rvPick.m=0;state.rvPick.y++;}
+    renderRvPanel();
+  }));
+  bindCalendar($('#rvPanel'),'trading',ds=>{
+    state.reviewDate=ds;
+    $('#rvBtn').textContent='复盘日 '+ds+' ▾';
+    $('#rvPanel').classList.remove('on');
+    renderReview();
+  });
+}
+
+/* ---- 开市日历屏 ---- */
+function renderMarketCal(){
+  const {y,m}=state.cal;
+  $('#calTitle').textContent = `${y} 年 ${m+1} 月`;
+  // calendarHTML 内部已输出星期表头，此处不再重复
+  $('#calGrid').innerHTML = calendarHTML('market',y,m,null);
+
+  const days=new Date(y,m+1,0).getDate();
+  let open=0, closed=0;
+  for(let d=1;d<=days;d++){ mkt(`${y}-${pad(m+1)}-${pad(d)}`).open ? open++ : closed++; }
+  $('#calOpenN').textContent  = open;
+  $('#calClosedN').textContent= closed;
+  $('#calMonthLabel').textContent = `${y} 年 ${m+1} 月 · 共 ${days} 天`;
+
+  const nx = nextTradingDay(TODAY);
+  $('#calNext').textContent = nx.slice(5);
+  $('#calNextD').textContent= `周${WD[parseD(nx).getDay()]} · 距今 ${
+    Math.round((parseD(nx)-parseD(TODAY))/86400000)} 天`;
+
+  $('#calPrev').disabled    = (y===2026&&m===0);
+  $('#calNextBtn').disabled  = (y===2026&&m===11);
+  renderNotes();
+}
+$('#calPrev').addEventListener('click',()=>{ state.cal.m--; if(state.cal.m<0){state.cal.m=11;state.cal.y--;} renderMarketCal(); });
+$('#calNextBtn').addEventListener('click',()=>{ state.cal.m++; if(state.cal.m>11){state.cal.m=0;state.cal.y++;} renderMarketCal(); });
+$('#calToday').addEventListener('click',()=>{ state.cal={y:Number(TODAY.slice(0,4)),m:Number(TODAY.slice(5,7))-1}; renderMarketCal(); });
+
+/* ---- 顶栏市场状态 + 本周条 ---- */
+function renderMarketBits(){
+  const st=mkt(TODAY);
+  $('#mktTag').innerHTML = `<span class="dot ${st.open?'ok':'off'}"></span>
+    今日 ${TODAY.slice(5)} 周${WD[parseD(TODAY).getDay()]} · ${st.open?'开市':'休市'}`;
+  $('#mktTag').title = st.label;
+
+  const base = parseD(TODAY);
+  const sun  = new Date(base); sun.setDate(sun.getDate()-base.getDay());
+  $('#weekStrip').innerHTML = ['日','一','二','三','四','五','六']
+      .map(w=>`<div class="d">${w}</div>`).join('')
+    + Array.from({length:7},(_,i)=>{
+        const d=new Date(sun); d.setDate(sun.getDate()+i);
+        const ds=fmtD(d), mk=mkt(ds);
+        const cls='c'+(mk.open?' open':'')+(ds===TODAY?' today':'');
+        const t = mk.kind==='makeup' ? '调休上班但仍休市' : mk.label;
+        return `<div class="${cls}" title="${ds} ${t}">${d.getDate()}</div>`;
+      }).join('');
+
+  // 若今天本身就是调休上班日，说"今天"而不是"下一次"
+  const nx = MAKEUP_DAYS.filter(d=>d>TODAY).sort()[0];
+  $('#weekNote').innerHTML = MAKEUP[TODAY]
+    ? `今天 <b class="tnum">${TODAY}</b> 是调休上班日，但沪深交易所<b>不交易</b>。`
+    : `下一次调休上班：<b class="tnum">${nx}</b>（周${WD[parseD(nx).getDay()]}）—— 上班但<b>不交易</b>。`;
+}
+
+/* 点击面板外部关闭 */
+document.addEventListener('click',e=>{
+  $$('.pop').forEach(p=>{
+    if(!p.contains(e.target)) $('.pop-panel',p)?.classList.remove('on');
+  });
+});
+$('#dateBtn').addEventListener('click',e=>{
+  e.stopPropagation();
+  const on=$('#datePanel').classList.contains('on');
+  $$('.pop-panel').forEach(p=>p.classList.remove('on'));
+  if(!on){ renderDatePanel(); $('#datePanel').classList.add('on'); }
+});
+$('#rvBtn').addEventListener('click',e=>{
+  e.stopPropagation();
+  const on=$('#rvPanel').classList.contains('on');
+  $$('.pop-panel').forEach(p=>p.classList.remove('on'));
+  if(!on){ renderRvPanel(); $('#rvPanel').classList.add('on'); }
+});
+
+/* ============================================================
+   6. 快讯流
+   ============================================================ */
+function starHTML(n, score=0, reasons=[]){
+  const explanation=Number(score)>0
+    ? ` title="${escapeHtml(`信息重要度 ${Math.round(Number(score))} 分${Array.isArray(reasons)&&reasons.length?'：'+reasons.join('；'):''}`)}"`
+    : '';
+  let h=`<span class="stars"${explanation}>`;
+  for(let i=1;i<=5;i++) h+=`<i class="${i<=n?'':'off'}">★</i>`;
+  return h+`<span class="num">${n}/5</span></span>`;
+}
+function syncFavUI(){
+  const on=state.filters.favOnly;
+  const b=$('#favFilterBtn');
+  b.style.background = on?'var(--warn-soft)':'';
+  b.style.borderColor= on?'transparent':'';
+  b.style.color      = on?'var(--warn)':'';
+  b.style.fontWeight = on?'600':'';
+}
+$('#favFilterBtn').addEventListener('click',()=>{
+  state.filters.favOnly=!state.filters.favOnly; syncFavUI(); renderFeed();
+});
+
+function renderFeed(){
+  const f=state.filters;
+  const query=($('#feedSearch')?.value||'').trim().toLowerCase();
+  let list=NEWS.filter(n=>
+    (!f.date || n.date===f.date) &&
+    (f.stars===0 || n.stars===f.stars) &&
+    (f.tag==='all' || n.tags.includes(f.tag)) &&
+    (!f.favOnly || state.favorites.has(n.id)) &&
+    (!query || `${n.title} ${n.brief} ${n.tags.join(' ')} ${n.chain.flatMap(c=>c.items).map(x=>x.code).join(' ')}`.toLowerCase().includes(query))
+  );
+  if(f.sort==='stars') list=[...list].sort((a,b)=>b.stars-a.stars);
+  else                 list=[...list].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+
+  $('#feedList').innerHTML = list.length? list.map(n=>`
+    <article class="news" data-id="${n.id}" data-note="feed-card">
+      <div class="time">${n.hasExactTime===false?n.date.slice(5):n.time}${n.hasExactTime===false?'':`<span class="d">${n.date.slice(5)}</span>`}</div>
+      <div class="body">
+        <button class="fav ${state.favorites.has(n.id)?'on':''}" data-fav="${n.id}" data-note="feed-fav"
+          title="${state.favorites.has(n.id)?'取消收藏':'加入收藏'}">${state.favorites.has(n.id)?'★':'☆'}</button>
+        <div class="meta">
+          <span class="chip src">${n.source}</span>
+          ${starHTML(n.stars,n.importanceScore,n.importanceReasons)}
+          ${n.stars>=4?'<span class="chip hot">高重要度</span>':''}
+        </div>
+        <h3>${n.title}</h3>
+        <div class="tags">${n.tags.map(t=>`<span class="chip tag"># ${t}</span>`).join('')}</div>
+        <div class="brief">${n.brief}</div>
+        <div class="acts">
+          <span class="link" data-act="ana" data-note="feed-gotoana">${n.aiAnalysis?'查看智能分析 →':'查看摘要并开始 AI 分析 →'}</span>
+          ${safeUrl(n.url)?`<a class="ext" href="${safeUrl(n.url)}" target="_blank" rel="noopener" data-note="feed-srclink">原文链接 ↗</a>`:'<span class="ext muted">暂无原文链接</span>'}
+          ${n.aiAnalysis?`<span class="muted" style="margin-left:auto;font-size:11.5px">已关联 ${n.chain.reduce((s,c)=>s+c.items.length,0)} 只标的</span>`:''}
+        </div>
+      </div>
+    </article>`).join('')
+    : `<div class="card" style="padding:40px;text-align:center;color:var(--ink-3)">
+         ${f.favOnly?'还没有收藏任何快讯，点卡片右上角的 ☆ 加入收藏':'当前筛选条件下没有快讯'}</div>`;
+
+  $$('.news').forEach(el=>el.addEventListener('click',()=>gotoAnalysis(el.dataset.id)));
+  $$('.fav').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const id=b.dataset.fav;
+    state.favorites.has(id) ? state.favorites.delete(id) : state.favorites.add(id);
+    renderFeed(); syncFavUI();
+  }));
+
+  $('#navCount').textContent=NEWS.length;
+  $('#stTotal').textContent=list.length;
+  $('#stTotalD').textContent = f.favOnly
+    ? '当前为收藏筛选'
+    : (f.date ? `筛选日期 ${f.date}` : `${dataMode==='live'?'最近3天新闻':'示例快讯'}共 ${list.length} 条`);
+  $('#stHot').textContent   =list.filter(n=>n.stars>=4).length;
+  $('#stFav').textContent   =state.favorites.size;
+  // 去重统计：同一标的可能同时出现在多条快讯的传导链中
+  const codes=new Set();
+  list.forEach(n=>n.chain.forEach(c=>c.items.forEach(i=>codes.add(i.code))));
+  $('#stStocks').textContent=codes.size;
+
+  $('#hotList').innerHTML=[...NEWS].sort((a,b)=>b.stars-a.stars).slice(0,5)
+    .map((n,i)=>`<div class="hotrow" data-id="${n.id}">
+        <span class="rank ${i===0?'top':''}">${i+1}</span>
+        <span class="t">${n.title}</span></div>`).join('');
+  $$('#hotList .hotrow').forEach(el=>el.addEventListener('click',()=>gotoAnalysis(el.dataset.id)));
+  renderNotes();
+}
+$$('.seg[data-filter]').forEach(seg=>seg.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  $$('button',seg).forEach(x=>x.classList.toggle('on',x===b));
+  state.filters.stars=+b.dataset.v; renderFeed();
+}));
+$$('.select[data-filter]').forEach(sel=>sel.addEventListener('change',()=>{
+  state.filters[sel.dataset.filter]=sel.value; renderFeed();
+}));
+$('#feedSearch').addEventListener('input',renderFeed);
+$('[data-note="feed-refresh"]').addEventListener('click',()=>loadLiveNews(true));
+
+/* ============================================================
+   7. 新闻导入
+   ============================================================ */
+const IMPORT_MODE_LABEL={link:'粘贴链接'};
+const IMPORT_STATUS_LABEL={pending:'待打标',tagged:'已打标',analyzed:'已推演'};
+function importStatusLabel(record){
+  return record.status==='pending' && record.feed_removed_at?'待重新打标':(IMPORT_STATUS_LABEL[record.status]||'待打标');
+}
+
+function setImportStatus(message,isError=false){
+  const el=$('#importStatus'); if(!el) return;
+  el.textContent=message;
+  el.style.color=isError?'var(--down)':'var(--ink-3)';
+}
+function importTime(value){
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime())) return safeText(value,'—');
+  return new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})
+    .format(date).replaceAll('/','-');
+}
+function clearImportForm(){
+  $('#importLink').value='';
+  setImportStatus('入库后状态为“待打标”，需确认标签与信息重要度');
+}
+$('#importClearBtn').addEventListener('click',clearImportForm);
+
+$('#importBtn').addEventListener('click',async()=>{
+  const button=$('#importBtn');
+  const tab='link';
+  const payload={mode:tab};
+  try{
+    const urls=$('#importLink').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    if(!urls.length) throw new Error('请先粘贴新闻链接。');
+    payload.urls=urls.slice(0,5);
+    button.disabled=true; button.textContent='正在解析…';
+    setImportStatus('正在抓取网页并调用 DeepSeek 生成摘要…');
+    const response=await fetch('/api/imports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const result=await response.json();
+    if(!response.ok||!result.ok) throw new Error(result.error||'导入失败');
+    clearImportForm();
+    await loadImports();
+    const added=(result.items||[]).length-Number(result.duplicate_count||0);
+    const notes=[];
+    if(added>0) notes.push(`已新增 ${added} 条待打标新闻`);
+    if(result.duplicate_count) notes.push(`跳过 ${result.duplicate_count} 条重复新闻`);
+    if(result.errors&&result.errors.length) notes.push(`${result.errors.length} 条链接未成功`);
+    setImportStatus(notes.join('，')||'导入完成。');
+  }catch(error){
+    setImportStatus(error&&error.message?error.message:'导入失败，请稍后重试。',true);
+  }finally{
+    button.disabled=false; button.textContent='解析并入库';
+  }
+});
+
+async function loadImports(){
+  try{
+    const response=await fetch('/api/imports',{cache:'no-store'});
+    const result=await response.json();
+    if(!response.ok||!result.ok||!Array.isArray(result.items)) throw new Error('读取失败');
+    IMPORTS=result.items; renderImports();
+  }catch(error){
+    IMPORTS=[]; renderImports(); setImportStatus('暂时无法读取导入记录。',true);
+  }
+}
+function renderImports(){
+  $('#impBody').innerHTML = IMPORTS.length?IMPORTS.map(r=>{
+    const status=importStatusLabel(r);
+    const stars=Number(r.confirmed_stars||r.suggested_stars||0);
+    const originalUrl=safeUrl(r.url);
+    return `
+    <tr style="cursor:default">
+      <td style="max-width:340px"><b>${escapeHtml(r.title)}</b>${r.file_name?`<div class="muted" style="font-size:11px">${escapeHtml(r.file_name)}</div>`:''}</td>
+      <td class="import-url">${originalUrl?`<a href="${escapeHtml(originalUrl)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(originalUrl)}">${escapeHtml(originalUrl)}</a>`:'<span class="muted">—</span>'}</td>
+      <td><span class="chip">${IMPORT_MODE_LABEL[r.mode]||'人工导入'}</span></td>
+      <td class="tnum muted">${importTime(r.imported_at)}</td>
+      <td><span class="chip ${r.status==='pending'?'miss':r.status==='analyzed'?'hit':'flat'}">${status}</span></td>
+      <td>${stars?`${r.status==='pending'?'<span class="muted" style="font-size:11px">建议 </span>':''}${starHTML(stars,r.importance_score,r.importance_reasons)}`:'<span class="muted">—</span>'}</td>
+      <td class="num">
+        <div class="import-actions">
+          <button class="btn sm" type="button" data-import-id="${escapeHtml(r.id)}">${r.status==='pending'?(r.feed_removed_at?'重新打标':'开始打标'):'查看'}</button>
+          <button class="btn sm import-delete" type="button" data-import-delete="${escapeHtml(r.id)}">删除</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="7" style="padding:34px;text-align:center;color:var(--ink-3)">还没有导入记录</td></tr>';
+  const pending=IMPORTS.filter(r=>r.status==='pending');
+  $('#navImp').textContent=pending.length;
+  $('#impPending').textContent=pending.filter(r=>importTime(r.imported_at).slice(0,10)===TODAY).length;
+  $$('[data-import-id]').forEach(button=>button.addEventListener('click',()=>openImportModal(button.dataset.importId)));
+  $$('[data-import-delete]').forEach(button=>button.addEventListener('click',()=>deleteImportRecord(button.dataset.importDelete,button)));
+  renderNotes();
+}
+
+async function deleteImportRecord(id,button){
+  const record=IMPORTS.find(item=>item.id===id);
+  if(!record) return;
+  if(!window.confirm(`确定删除这条导入记录吗？\n${record.title}\n删除后无法恢复；如果已经进入快讯流，也会从快讯流移除。`)) return;
+  button.disabled=true;
+  try{
+    const response=await fetch(`/api/imports/${encodeURIComponent(id)}`,{method:'DELETE'});
+    const result=await response.json();
+    if(!response.ok||!result.ok) throw new Error(result.error||'删除失败');
+    IMPORTS=IMPORTS.filter(item=>item.id!==id);
+    const newsIndex=NEWS.findIndex(item=>item.id===id);
+    if(newsIndex>=0){NEWS.splice(newsIndex,1);renderFeed();renderMarketBits();}
+    renderImports();
+    setImportStatus('导入记录已删除。');
+  }catch(error){
+    button.disabled=false;
+    setImportStatus(error&&error.message?error.message:'删除失败，请稍后重试。',true);
+  }
+}
+
+function renderImportStars(readOnly=false){
+  $('#importStarPick').innerHTML=[1,2,3,4,5].map(value=>`<button type="button" data-star="${value}" class="${value<=selectedImportStars?'on':''}" ${readOnly?'disabled':''}>★</button>`).join('');
+  if(!readOnly) $$('#importStarPick button').forEach(button=>button.addEventListener('click',()=>{
+    selectedImportStars=Number(button.dataset.star); renderImportStars(false);
+  }));
+}
+function closeImportModal(){
+  $('#importModalScrim').classList.remove('on'); $('#importModalScrim').setAttribute('aria-hidden','true'); activeImportRecord=null;
+}
+function renderImportModal(record,loading=false){
+  const readOnly=record.status!=='pending';
+  selectedImportStars=Math.max(1,Math.min(5,Number(record.confirmed_stars||record.suggested_stars||3)));
+  $('#importModalTitle').textContent=record.title;
+  $('#importModalMeta').innerHTML=`<span class="chip">${IMPORT_MODE_LABEL[record.mode]||'人工导入'}</span><span class="chip ${readOnly?'flat':'miss'}">${importStatusLabel(record)}</span><span class="muted">${escapeHtml(record.source||'来源未识别')}</span>`;
+  $('#importModalSummary').textContent=loading?'DeepSeek 正在阅读原文并生成摘要…':(record.summary||'没有可用摘要。');
+  const entityGroups=[['公司',record.entities&&record.entities.companies],['行业',record.entities&&record.entities.industries],['机构',record.entities&&record.entities.institutions]];
+  const entityHtml=entityGroups.flatMap(([label,items])=>(Array.isArray(items)?items:[]).map(item=>`<span class="chip tag">${label} · ${escapeHtml(item)}</span>`)).join('');
+  $('#importModalEntities').innerHTML=entityHtml||'<span class="muted" style="font-size:11.5px">未抽取到明确的公司、行业或机构实体</span>';
+  $('#importTagSelect').innerHTML=FIXED_TAGS.map(tag=>`<option value="${tag}">${tag}</option>`).join('');
+  $('#importTagSelect').value=record.confirmed_tag||record.suggested_tag||'行业动态';
+  $('#importDateInput').value=safeText(record.published_at);
+  $('#importTagSelect').disabled=readOnly; $('#importDateInput').disabled=readOnly;
+  $('#importImportanceReason').textContent=(record.importance_reasons||[]).join('；')||'根据六项信息重要度规则生成建议值。';
+  renderImportStars(readOnly);
+  $('#importConfirmBtn').style.display=readOnly?'none':'';
+  $('#importConfirmBtn').disabled=loading;
+  $('#importModalCancel').textContent=readOnly?'关闭':'取消';
+}
+async function prepareImportSummary(id){
+  if(!activeImportRecord||activeImportRecord.id!==id) return;
+  $('#importConfirmBtn').disabled=true;
+  $('#importModalSummary').textContent='DeepSeek 正在阅读原文并生成摘要…';
+  $('#importModalStatus').textContent='摘要生成中，请稍候。完成后可检查标签和信息重要度。';
+  $('#importModalStatus').style.color='var(--ink-3)';
+  $('#importSummaryRetry').hidden=true;
+  try{
+    const response=await fetch(`/api/imports/${encodeURIComponent(id)}/prepare`,{method:'POST'});
+    const result=await response.json();
+    if(!response.ok||!result.ok||!result.item) throw new Error(result.error||'摘要生成失败');
+    const index=IMPORTS.findIndex(item=>item.id===id);
+    if(index>=0){IMPORTS[index]=result.item;renderImports();}
+    if(!activeImportRecord||activeImportRecord.id!==id) return;
+    activeImportRecord=result.item;
+    renderImportModal(result.item);
+    $('#importModalStatus').textContent='DeepSeek 摘要已生成，请核对后确认入流。';
+    $('#importModalStatus').style.color='var(--ink-3)';
+    $('#importConfirmBtn').disabled=false;
+  }catch(error){
+    if(!activeImportRecord||activeImportRecord.id!==id) return;
+    const message=error&&error.message?error.message:'摘要生成失败，请稍后重试。';
+    $('#importModalSummary').textContent='摘要未生成，当前不能确认入流。';
+    $('#importModalStatus').textContent=message;
+    $('#importModalStatus').style.color='var(--down)';
+    $('#importSummaryRetry').hidden=false;
+    setImportStatus(message,true);
+  }
+}
+function openImportModal(id){
+  const record=IMPORTS.find(item=>item.id===id); if(!record) return;
+  activeImportRecord=record;
+  const pending=record.status==='pending';
+  renderImportModal(record,pending);
+  $('#importModalStatus').textContent='';
+  $('#importSummaryRetry').hidden=true;
+  $('#importModalScrim').classList.add('on'); $('#importModalScrim').setAttribute('aria-hidden','false');
+  if(pending) prepareImportSummary(id);
+}
+$('#importSummaryRetry').addEventListener('click',()=>{
+  if(activeImportRecord) prepareImportSummary(activeImportRecord.id);
+});
+$('#importTagBtn').addEventListener('click',()=>{
+  const record=IMPORTS.find(item=>item.status==='pending');
+  if(!record){ setImportStatus('当前没有待打标新闻。'); return; }
+  openImportModal(record.id);
+});
+$('#importModalClose').addEventListener('click',closeImportModal);
+$('#importModalCancel').addEventListener('click',closeImportModal);
+$('#importModalScrim').addEventListener('click',event=>{if(event.target===$('#importModalScrim')) closeImportModal();});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('#importModalScrim').classList.contains('on')) closeImportModal();});
+$('#importConfirmBtn').addEventListener('click',async()=>{
+  if(!activeImportRecord) return;
+  const button=$('#importConfirmBtn');
+  let retryRequired=false;
+  try{
+    button.disabled=true; button.textContent='正在确认入流…';
+    setImportStatus('正在保存已生成的摘要、标签和信息重要度…');
+    const response=await fetch(`/api/imports/${encodeURIComponent(activeImportRecord.id)}/confirm`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tag:$('#importTagSelect').value,stars:selectedImportStars,published_at:$('#importDateInput').value})
+    });
+    const result=await response.json();
+    if(!response.ok||!result.ok) throw new Error(result.error||'确认失败');
+    closeImportModal(); await loadImports(); await loadLiveNews(false);
+    setImportStatus('DeepSeek 摘要已确认并入库，这条新闻已经进入快讯流。');
+  }catch(error){
+    const message=error&&error.message?error.message:'确认失败，请稍后重试。';
+    setImportStatus(message,true);
+    $('#importModalStatus').textContent=message;
+    $('#importModalStatus').style.color='var(--down)';
+    retryRequired=/摘要|打标/.test(message);
+    if(retryRequired) $('#importSummaryRetry').hidden=false;
+  }finally{
+    button.disabled=retryRequired; button.textContent='确认并进入快讯流';
+  }
+});
+
+/* ============================================================
+   8. 智能分析
+   ============================================================ */
+const STAGE_COLOR=['var(--s1)','var(--s2)','var(--s3)'];
+function gotoAnalysis(id){ showScreen('analysis'); openAnalysis(id); }
+
+function setAnalysisButtons(n, loading=false){
+  const buttons=[$('#anaRun'),$('#aiRunInline')].filter(Boolean);
+  buttons.forEach(button=>{
+    button.disabled=loading || dataMode!=='live';
+    button.textContent=loading?'DeepSeek 分析中…':(n.aiAnalysis?'重新分析':'开始 AI 分析');
+  });
+  const status=$('#aiStatus');
+  if(!status) return;
+  if(loading) status.textContent='正在读取行业候选并生成结构化分析，请稍候…';
+  else if(n.aiAnalysis) status.textContent=n.aiAnalysis.fallback?'已显示基础结果，部分筛选暂未完成。':'已完成结构化分析，可重新分析。';
+  else if(dataMode==='live' && n.raw&&n.raw.manual_import && n.summaryStatus==='fallback') status.textContent='当前显示本地规则整理的导入摘要，点击后调用 DeepSeek 做完整分析。';
+  else if(dataMode==='live' && n.summaryStatus==='fallback') status.textContent='当前显示 iFinD 原摘要，点击后调用 DeepSeek 做完整分析。';
+  else if(dataMode==='live') status.textContent='摘要已由 DeepSeek 整理，点击后调用 DeepSeek 做完整分析。';
+  else status.textContent='当前是示例数据，请先通过 http://127.0.0.1:3000 打开网站。';
+}
+
+async function runAiAnalysis(id){
+  const n=NEWS.find(x=>x.id===id); if(!n || dataMode!=='live') return;
+  setAnalysisButtons(n,true);
+  try{
+    const response=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({news:n.raw || {
+      id:n.id,title:n.title,summary:n.brief,source:n.source,
+      time:n.hasExactTime===false?n.date:`${n.date} ${n.time}`,
+      published_at:n.hasExactTime===false?n.date:`${n.date} ${n.time}`,url:n.url
+    }})});
+    const payload=await response.json();
+    if(!response.ok || !payload.ok || !payload.analysis) throw new Error(payload.error || '分析服务没有返回结果');
+    applyAnalysisToNews(n,payload.analysis);
+    renderFeed();
+    openAnalysis(id);
+    loadImports();
+  }catch(error){
+    setAnalysisButtons(n,false);
+    const message=error && error.message ? error.message : '未知错误';
+    const status=$('#aiStatus'); if(status) status.textContent=`分析失败：${message}`;
+  }
+}
+
+function openAnalysis(id){
+  const n = NEWS.find(x=>x.id===id); if(!n) return;
+  activeNewsId=id;
+
+  $('#docSrc').textContent=n.source || 'iFinD';
+  $('#docStars').innerHTML=starHTML(n.stars,n.importanceScore,n.importanceReasons);
+  $('#docTitle').textContent=n.title;
+  $('#docFull').textContent=n.aiAnalysis ? safeText(n.aiAnalysis.summary,n.full) : n.full;
+  $('#docDate').textContent=n.dateBasis==='imported'?`${n.date}（导入日期）`:n.hasExactTime===false?n.date:`${n.date} ${n.time}`;
+  $('#docTags').textContent=n.tags.map(t=>'# '+t).join('  ');
+  const sourceUrl=safeUrl(n.url);
+  $('#docLink').href=sourceUrl || '#';
+  $('#docLink').style.pointerEvents=sourceUrl?'auto':'none';
+  $('#docLink').style.opacity=sourceUrl?'1':'.45';
+  setAnalysisButtons(n);
+
+  const vd=$('#verdict');
+  vd.classList.toggle('bear', n.dir==='down');
+  vd.classList.toggle('neutral', n.dir==='neutral');
+  $('#vdLead').textContent=n.aiAnalysis ? n.conclusion : '新闻资料已准备好，等待 AI 生成事件方向、影响链和候选股票。';
+  const dirEl=$('#vdDir');
+  dirEl.className='chip '+(n.dir==='up'?'up':n.dir==='down'?'down':'flat');
+  dirEl.textContent = n.aiAnalysis ? (n.dir==='up'?'▲ 整体偏多' : n.dir==='down'?'▼ 整体偏空' : '— 方向不确定') : '— 待 AI 判断';
+  $('#vdConf').textContent=n.aiAnalysis?Math.round(n.conf*100)+'%':'—';
+  $('#vdBar').style.width=(n.aiAnalysis?n.conf*100:0)+'%';
+
+  const industries=Array.isArray(n.industries)?n.industries:[];
+  $('#industryList').innerHTML=industries.length ? industries.map(item=>{
+    const d=DIR_TO_UI[item.direction] || 'neutral';
+    const label=d==='up'?'▲ 利好':d==='down'?'▼ 利空':'— 不确定';
+    return `<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--border)"><span class="chip ${d==='up'?'up':d==='down'?'down':'flat'}">${label}</span><span><b>${escapeHtml(item.name||'待判断')}</b> <span class="muted">${escapeHtml(item.reason||'资料不足，暂不做确定判断。')}</span></span></div>`;
+  }).join('') : '点击“开始 AI 分析”后显示行业判断。';
+
+  $('#chainCols').innerHTML = n.chain.map((col,ci)=>`
+    <div class="chain-col">
+      <div class="chain-hd">
+        <span class="sw" style="background:${STAGE_COLOR[ci%3]}"></span>
+        <span class="nm">${escapeHtml(col.stage)}</span><span class="sub">${escapeHtml(col.note)}</span>
+      </div>
+      ${col.items.map(it=>`
+        <div class="node" data-code="${it.code}">
+          <div><div class="nm">${escapeHtml(it.name)}</div><div class="code">${escapeHtml(it.code)}</div></div>
+          <div class="r">
+            ${starHTML(it.stars).replace('<span class="stars">','<span class="stars" style="font-size:10px">')}
+            <span class="arrow ${it.dir}">${it.dir==='up'?'▲':it.dir==='down'?'▼':'—'}</span>
+          </div>
+        </div>`).join('')}
+    </div>`).join('')
+    || '<div class="muted" style="font-size:12.5px">该条快讯尚未完成推演。</div>';
+
+  const rows=[];
+  n.chain.forEach((col,ci)=>col.items.forEach(it=>rows.push({...it,stage:col.stage,ci})));
+  $('#tblBody').innerHTML = rows.length? rows.map(r=>`
+    <tr data-code="${r.code}">
+      <td><div style="font-weight:600">${escapeHtml(r.name)}</div><div class="muted tnum" style="font-size:11px">${escapeHtml(r.code)}</div></td>
+      <td><span class="stage-dot"><i style="background:${STAGE_COLOR[r.ci%3]}"></i>${escapeHtml(r.stage)}</span></td>
+      <td>${starHTML(r.stars)}</td>
+      <td><span class="chip ${r.dir==='up'?'up':r.dir==='down'?'down':'flat'}">${
+        r.dir==='up'?'▲ 利好':r.dir==='down'?'▼ 利空':'— 中性'}</span></td>
+      <td class="num">${Math.round(r.conf*100)}%</td>
+      <td class="num">${Number.isFinite(r.px)?r.px.toFixed(2):'—'}</td>
+    </tr>`).join('')
+    : '<tr><td colspan="6" class="muted" style="padding:24px;text-align:center">暂无标的</td></tr>';
+
+  $('#reasonOl').innerHTML=n.reasoning.length ? n.reasoning.map(t=>`<li>${t}</li>`).join('') : '<li class="muted">点击“开始 AI 分析”后显示不确定性与验证重点。</li>';
+  $$('#chainCols .node, #tblBody tr').forEach(el=>
+    el.addEventListener('click',()=>openDrawer(el.dataset.code, n)));
+}
+
+$('#anaRun').addEventListener('click',()=>runAiAnalysis(activeNewsId));
+$('#aiRunInline').addEventListener('click',()=>runAiAnalysis(activeNewsId));
+
+/* ============================================================
+   9. K 线抽屉
+   ============================================================ */
+function findStock(code,news){
+  for(const col of news.chain) for(const it of col.items)
+    if(it.code===code) return {...it, stage:col.stage, note:col.note};
+  return null;
+}
+function openDrawer(code,news){
+  const s=findStock(code,news); if(!s) return;
+  $('#kName').textContent=s.name;
+  $('#kCode').textContent=s.code;
+  $('#kStage').textContent=s.stage+' · '+(s.note||'');
+  $('#kPx').textContent=Number.isFinite(s.px)?s.px.toFixed(2):'—';
+  const chg=$('#kChg');
+  if(Number.isFinite(s.chg)){
+    chg.className='chip '+(s.chg>=0?'up':'down');
+    chg.textContent=(s.chg>=0?'▲ +':'▼ ')+s.chg.toFixed(2)+'%';
+  }else{
+    chg.className='chip flat'; chg.textContent='暂无行情';
+  }
+
+  const bars=Array.isArray(s.kline && s.kline.bars) ? s.kline.bars : [];
+  const candles=bars.map(bar=>({
+    o:Number(bar.open), h:Number(bar.high), l:Number(bar.low), c:Number(bar.close),
+    v:Number(bar.volume)||0, date:safeText(bar.date)
+  })).filter(d=>[d.o,d.h,d.l,d.c].every(Number.isFinite));
+  $('#kSub').textContent=candles.length ? 'iFinD · 交易日内5分钟行情' : safeText(s.kline && s.kline.reason,'当前没有可用行情数据');
+  if(candles.length) renderKline($('#kSvg'),candles,candles.map(d=>d.date));
+  else $('#kSvg').innerHTML='<div class="muted" style="padding:30px 10px;text-align:center">当前没有可用的真实K线数据。交易时间外或数据权限不足时会出现这种情况。</div>';
+
+  $('#kRole').textContent=s.role||'—';
+  $('#kTable').innerHTML=candles.length ? candles.slice(-5).map((d,i)=>{
+    const idx=candles.length-5+i;
+    const prev=idx>0?candles[idx-1].c:d.o, pct=((d.c-prev)/prev*100);
+    return `<tr>
+      <td class="tnum">${escapeHtml(d.date||'—')}</td>
+      <td class="num">${d.o.toFixed(2)}</td><td class="num">${d.h.toFixed(2)}</td>
+      <td class="num">${d.l.toFixed(2)}</td><td class="num">${d.c.toFixed(2)}</td>
+      <td class="num" style="color:${pct>=0?'var(--up)':'var(--down)'}">${pct>=0?'+':''}${pct.toFixed(2)}%</td>
+    </tr>`;}).join('') : '<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">暂无真实行情数据</td></tr>';
+
+  $('#scrim').classList.add('on'); $('#drawer').classList.add('on');
+}
+function genCandles(seed,n,start){
+  const r=mulberry32(seed); const out=[]; let p=start;
+  for(let i=0;i<n;i++){
+    const o=p;
+    const c=+(o*(1+(r()-0.47)*0.028)).toFixed(2);
+    const h=+(Math.max(o,c)*(1+r()*0.011)).toFixed(2);
+    const l=+(Math.min(o,c)*(1-r()*0.011)).toFixed(2);
+    out.push({o,h,l,c,v:0.35+r()*0.9}); p=c;
+  }
+  return out;
+}
+function maLine(c,n){return c.map((_,i)=>i<n-1?null:c.slice(i-n+1,i+1).reduce((s,d)=>s+d.c,0)/n);}
+function closeDrawer(){$('#scrim').classList.remove('on');$('#drawer').classList.remove('on');}
+$('#scrim').addEventListener('click',closeDrawer);
+$('#drawerClose').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+function renderKline(host,candles,dates=DATES){
+  const W=820, PL=10, PR=56, PT=12, PH=250, GAP=16, VH=62, AX=22;
+  const H=PT+PH+GAP+VH+AX, plotW=W-PL-PR, n=candles.length, step=plotW/n;
+  const hi=Math.max(...candles.map(d=>d.h)), lo=Math.min(...candles.map(d=>d.l));
+  const padY=(hi-lo)*0.06, max=hi+padY, min=lo-padY;
+  const Y=v=>PT+PH*(max-v)/(max-min);
+  const vmax=Math.max(1,...candles.map(d=>Number(d.v)||0));
+  const bw=Math.max(2,step*0.62);
+
+  let g='';
+  for(let i=0;i<=4;i++){
+    const y=PT+PH*i/4, val=max-(max-min)*i/4;
+    g+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${PL+plotW}" y2="${y.toFixed(1)}"
+          style="stroke:var(--grid);stroke-width:1"/>`;
+    g+=`<text x="${PL+plotW+8}" y="${(y+3.5).toFixed(1)}" style="fill:var(--ink-3);font-size:10px"
+          class="tnum">${val.toFixed(2)}</text>`;
+  }
+  let bodies='';
+  candles.forEach((d,i)=>{
+    const cx=PL+step*(i+0.5), up=d.c>=d.o;
+    bodies+=`<line x1="${cx.toFixed(1)}" y1="${Y(d.h).toFixed(1)}" x2="${cx.toFixed(1)}" y2="${Y(d.l).toFixed(1)}"
+      style="stroke:${up?'var(--up)':'var(--down)'};stroke-width:1"/>`;
+    const yt=Y(Math.max(d.o,d.c)), yb=Y(Math.min(d.o,d.c));
+    bodies+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${yt.toFixed(1)}" width="${bw.toFixed(1)}"
+      height="${Math.max(1,yb-yt).toFixed(1)}"
+      style="${up?`fill:var(--candle-up-fill);stroke:var(--up);stroke-width:1`
+                :`fill:var(--down);stroke:var(--down);stroke-width:1`}"/>`;
+  });
+  let vol='';
+  candles.forEach((d,i)=>{
+    const cx=PL+step*(i+0.5), up=d.c>=d.o, h=VH*(d.v/vmax);
+    vol+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${(PT+PH+GAP+VH-h).toFixed(1)}" width="${bw.toFixed(1)}"
+      height="${h.toFixed(1)}" style="fill:${up?'var(--up)':'var(--down)'};opacity:.55"/>`;
+  });
+  vol+=`<text x="${PL+2}" y="${PT+PH+GAP-4}" style="fill:var(--ink-3);font-size:10px">成交量</text>`;
+
+  const mk=(arr,color)=>{
+    const pts=arr.map((v,i)=>v==null?null:`${(PL+step*(i+0.5)).toFixed(1)},${Y(v).toFixed(1)}`)
+      .filter(Boolean).join(' ');
+    return `<polyline points="${pts}" fill="none" style="stroke:${color};stroke-width:2"
+      stroke-linejoin="round" stroke-linecap="round"/>`;
+  };
+  const mas = mk(maLine(candles,5),'var(--accent)')
+            + mk(maLine(candles,10),'var(--s2)')
+            + mk(maLine(candles,20),'var(--s3)');
+
+  let axis='';
+  for(let i=0;i<n;i+=10)
+    axis+=`<text x="${(PL+step*(i+0.5)).toFixed(1)}" y="${PT+PH+GAP+VH+15}" text-anchor="middle"
+      style="fill:var(--ink-3);font-size:10px" class="tnum">${escapeHtml(String(dates[i]||'').slice(5))}</text>`;
+
+  const cross=`<g id="kx" style="opacity:0">
+      <line x1="0" y1="${PT}" x2="0" y2="${PT+PH}" style="stroke:var(--axis);stroke-width:1"/>
+      <line x1="${PL}" y1="0" x2="${PL+plotW}" y2="0" style="stroke:var(--axis);stroke-width:1"/></g>`;
+
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" id="ksvg">${g}${vol}${bodies}${mas}${axis}${cross}
+    <rect x="${PL}" y="${PT}" width="${plotW}" height="${PH+GAP+VH}" fill="transparent" id="khit"/></svg>`;
+
+  const svg=$('#ksvg',host), tip=$('#kTip'), xg=$('#kx',host);
+  const vline=xg.querySelectorAll('line')[0], hline=xg.querySelectorAll('line')[1];
+
+  $('#khit',host).addEventListener('mousemove',e=>{
+    const r=svg.getBoundingClientRect();
+    let i=Math.floor(((e.clientX-r.left)*(W/r.width)-PL)/step);
+    i=Math.max(0,Math.min(n-1,i));
+    const cx=PL+step*(i+0.5), d=candles[i];
+    xg.style.opacity=1;
+    vline.setAttribute('x1',cx); vline.setAttribute('x2',cx);
+    hline.setAttribute('x1',PL);   hline.setAttribute('x2',PL+plotW);
+
+    const prev=i>0?candles[i-1].c:d.o, pct=((d.c-prev)/prev*100);
+    tip.style.opacity=1;
+    tip.innerHTML=`<div class="hd tnum">${escapeHtml(dates[i]||'—')}</div>
+      <div class="r"><span>开</span><span>${d.o.toFixed(2)}</span></div>
+      <div class="r"><span>高</span><span>${d.h.toFixed(2)}</span></div>
+      <div class="r"><span>低</span><span>${d.l.toFixed(2)}</span></div>
+      <div class="r"><span>收</span><span>${d.c.toFixed(2)}</span></div>
+      <div class="r"><span>涨跌</span><span style="color:${pct>=0?'var(--up)':'var(--down)'}">${pct>=0?'+':''}${pct.toFixed(2)}%</span></div>`;
+    const tw=tip.offsetWidth, th=tip.offsetHeight;
+    const ob=tip.offsetParent.getBoundingClientRect();
+    const ox=r.left-ob.left, oy=r.top-ob.top;
+    let lx=ox+(cx/W)*r.width+16, ly=oy+(Y(d.h)/H)*r.height-th-10;
+    if(lx+tw>ox+r.width) lx=ox+(cx/W)*r.width-tw-16;
+    if(ly<oy) ly=oy+(Y(d.l)/H)*r.height+12;
+    tip.style.left=lx+'px'; tip.style.top=ly+'px';
+  });
+  $('#khit',host).addEventListener('mouseleave',()=>{ xg.style.opacity=0; tip.style.opacity=0; });
+}
+
+/* ============================================================
+   10. 复盘：方向命中矩阵（只评方向，不评幅度）
+   ============================================================ */
+const DIR_ROWS=['up','flat','down'];         // 推演方向
+const ACT_COLS=['up','flat','down'];         // 实际方向
+
+function reviewed(){
+  return REVIEW.map(r=>({...r, actDir:dirOf(r.actPct), hit:r.predDir===dirOf(r.actPct)}));
+}
+function cellTone(n,max){
+  if(n===0) return {bg:'var(--surface-2)', fg:'var(--ink-3)'};
+  const r=n/max;
+  if(r>0.66) return {bg:'var(--m4)', fg:'#fff'};
+  if(r>0.33) return {bg:'var(--m3)', fg:'#fff'};
+  if(r>0.15) return {bg:'var(--m2)', fg:'var(--ink)'};
+  return {bg:'var(--m1)', fg:'var(--ink)'};
+}
+function renderMatrix(){
+  const rows=reviewed();
+  const counts={};
+  DIR_ROWS.forEach(a=>ACT_COLS.forEach(b=>counts[a+'|'+b]=0));
+  rows.forEach(r=>counts[r.predDir+'|'+r.actDir]++);
+  const max=Math.max(...Object.values(counts));
+
+  let h='<div class="cmx">';
+  h+='<div></div>'+ACT_COLS.map(c=>`<div class="h">实际${ACT_LABEL[c]}</div>`).join('');
+  DIR_ROWS.forEach(a=>{
+    h+=`<div class="rh">推演 ${DIR_LABEL[a]}</div>`;
+    ACT_COLS.forEach(b=>{
+      const n=counts[a+'|'+b], t=cellTone(n,max), diag=a===b;
+      // 计数为 0 时不打"判对/判错"标签——没有样本，无所谓对错
+      const sub = n===0 ? '' : (diag?'判对':'判错');
+      const label = n===0 ? '无样本' : `${n} 只${diag?'（判对）':'（判错）'}`;
+      h+=`<div class="c ${diag?'diag':''} ${n===0?'dim':''}" style="background:${t.bg};color:${t.fg}"
+            title="推演${DIR_LABEL[a]} / 实际${ACT_LABEL[b]}：${label}">
+            <span class="n">${n}</span><span class="s">${sub}</span></div>`;
+    });
+  });
+  h+='</div>';
+  $('#matrix').innerHTML=h;
+}
+
+/* 区间内的快讯：上一交易日 15:00 之后 → 所选交易日 15:00 之前
+   ISO 日期字符串可直接比较大小；中间的周末/节假日也算在区间内 */
+function newsInWindow(from,to){
+  return NEWS.filter(n=>{
+    if(n.date===from) return n.time >  '15:00';
+    if(n.date===to)   return n.time <= '15:00';
+    return n.date > from && n.date < to;
+  }).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));   // 时间倒序
+}
+function renderReview(){
+  const rows=reviewed();
+  const from=prevTradingDay(state.reviewDate), to=state.reviewDate;
+  $('#rvBtn').textContent='复盘日 '+state.reviewDate+' ▾';
+  $('#winFrom').textContent=`${from} 15:00`;
+  $('#winTo').textContent  =`${to} 15:00`;
+  $('#winNote').textContent=`（含上一交易日收盘后至 ${to} 收盘发布的快讯，调休休市日不计入交易日）`;
+
+  const n=rows.length, hit=rows.filter(r=>r.hit).length, miss=n-hit;
+  $('#rvN').innerHTML   =`${n}<small>只</small>`;
+  $('#rvHit').innerHTML =`${Math.round(hit/n*100)}<small>%</small>`;
+  $('#rvHitD').textContent=`${n} 只中 ${hit} 只方向一致`;
+  $('#rvMiss').innerHTML=`${miss}<small>只</small>`;
+
+  renderMatrix();
+  $('#rvNewsN').innerHTML=`${newsInWindow(from,to).length}<small>条</small>`;
+
+  const order=[...rows].sort((a,b)=>Number(a.hit)-Number(b.hit));
+  $('#missList').innerHTML=order.slice(0,4).map(d=>`
+    <div class="missrow">
+      <div>
+        <div class="h">${d.name} <span class="muted tnum" style="font-weight:400">${d.code}</span>
+          <span class="chip ${d.hit?'hit':'miss'}" style="margin-left:6px">${d.hit?'✓ 方向一致':'✕ 方向不一致'}</span></div>
+        <div class="b">推演 <b>${DIR_LABEL[d.predDir]}</b> · 实际 <b>${ACT_LABEL[d.actDir]}</b>（${d.actPct>0?'+':''}${d.actPct.toFixed(2)}%）<br>${d.why}</div>
+      </div>
+    </div>`).join('');
+
+  $('#reviewBody').innerHTML=rows.map(d=>`
+    <tr style="cursor:default">
+      <td><div style="font-weight:600">${d.name}</div><div class="muted tnum" style="font-size:11px">${d.code}</div></td>
+      <td><span class="chip ${d.predDir==='up'?'up':d.predDir==='down'?'down':'flat'}">${
+        d.predDir==='up'?'▲ 利好':d.predDir==='down'?'▼ 利空':'— 中性'}</span></td>
+      <td><span class="chip ${d.actDir==='up'?'up':d.actDir==='down'?'down':'flat'}">${
+        d.actDir==='up'?'▲ 上涨':d.actDir==='down'?'▼ 下跌':'— 持平'}</span></td>
+      <td class="num muted">${d.actPct>0?'+':''}${d.actPct.toFixed(2)}%</td>
+      <td><span class="chip ${d.hit?'hit':'miss'}">${d.hit?'✓ 一致':'✕ 不一致'}</span></td>
+      <td class="muted" style="font-size:11.5px;line-height:1.5">${d.why}</td>
+    </tr>`).join('');
+  renderNotes();
+}
+
+/* ============================================================
+   11. 开发交接标注
+   编号顺序即清单顺序；界面角标按 data-note 键匹配
+   ============================================================ */
+const NOTES = [
+  // ── 快讯流 ──
+  {k:'feed-search', sc:'快讯流', el:'顶栏搜索框',
+   tx:'接入全文检索：标题、正文、标签、股票代码四个字段，需要中文分词。建议后端返回命中片段用于高亮。当前为纯静态输入框。'},
+  {k:'feed-refresh', sc:'快讯流', el:'手动刷新',
+   tx:'接入华尔街见闻快讯拉取（轮询或 WebSocket）。必须按快讯唯一 id 去重并记录 last_seen_ts，否则会重复入库。'},
+  {k:'feed-export', sc:'快讯流', el:'导出今日清单',
+   tx:'导出 CSV/Excel，字段需与当前筛选条件一致；建议附一行数据口径说明（时间窗口、来源、是否含人工导入）。'},
+  {k:'feed-datepicker', sc:'快讯流', el:'日期筛选',
+   tx:'日期的可选/不可选必须由「当日是否有快讯」实时计算，不能写死。现有实现已经按数据推导，可直接复用这套逻辑。'},
+  {k:'feed-stars', sc:'快讯流', el:'信息重要度筛选（1–5 星）',
+   tx:'信息重要度由新鲜度、来源权威性、事件实质性、A股传导直接性、证据完整度和多来源确认六项可核验信号计算，不使用虚构点击量。'},
+  {k:'feed-tagfilter', sc:'快讯流', el:'标签下拉',
+   tx:'固定使用五个新闻大类：财报业绩、宏观政策、行业动态、商品与供应链、公司事件；每条新闻根据标题和摘要匹配其中一个类别。'},
+  {k:'feed-favfilter', sc:'快讯流', el:'仅看收藏',
+   tx:'收藏状态需持久化（user_id + news_id），并支持多端同步。当前仅存在内存里，刷新即丢失。'},
+  {k:'feed-sort', sc:'快讯流', el:'排序',
+   tx:'需定义同星级下的次级排序规则（建议时间倒序）。「按信息重要度」是否跨日期排序需要产品确认。'},
+  {k:'feed-card', sc:'快讯流', el:'快讯卡片（整卡可点）',
+   tx:'点击整卡进入智能分析页。建议埋点：news_id、进入时间、入口来源（快讯流/收藏/高影响榜）。'},
+  {k:'feed-fav', sc:'快讯流', el:'收藏按钮 ☆',
+   tx:'与「仅看收藏」共用同一持久化接口。注意阻止事件冒泡，否则点收藏会连带触发卡片跳转。'},
+  {k:'feed-gotoana', sc:'快讯流', el:'查看智能分析 →',
+   tx:'调用推演接口，返回产业链结构（环节分层 + 标的 + 影响方向 + 方向置信度）。接口字段见本页「智能分析」部分。'},
+  {k:'feed-srclink', sc:'快讯流', el:'原文链接 ↗',
+   tx:'需保存快讯原始 URL。注意部分快讯本身没有外链，前端要降级为不可点状态，不要渲染成死链接。'},
+  {k:'feed-hot', sc:'快讯流', el:'信息重要度榜',
+   tx:'按信息重要度星级排序；重要度表示优先处理价值，不等于股价涨跌方向或收益概率。'},
+  {k:'feed-wordcloud', sc:'快讯流', el:'标签词云',
+   tx:'统计口径需产品确认：当前是「全库近 7 日」的示例分布；若要跟随筛选联动，需改为按当前筛选结果聚合。字号编码出现次数，颜色编码标签类别。'},
+
+  // ── 智能分析 ──
+  {k:'ana-chain', sc:'智能分析', el:'产业链传导路径',
+   tx:'推演接口需返回：环节分层（上游/直接/下游）、每层标的、影响方向（利好/利空/中性）、方向置信度、以及该标的在本链条中的角色说明。注意：产品已定「只给方向」，接口不要返回目标价或涨跌幅预测。'},
+  {k:'ana-table', sc:'智能分析', el:'受影响标的清单',
+   tx:'与产业链路径同一接口；「方向置信度」的计算方式需要定义并写进接口文档，否则前端无法解释这个数字的含义。'},
+  {k:'ana-reanalyze', sc:'智能分析', el:'重新推演',
+   tx:'需支持强制重跑并绕过缓存。建议记录每次推演的耗时与模型版本，便于对比效果。'},
+  {k:'ana-track', sc:'智能分析', el:'加入复盘跟踪',
+   tx:'把本次推演的标的与方向写入复盘跟踪表，作为次日复盘的基准。没有这一步，复盘页就没有对照数据。'},
+
+  // ── 复盘校验 ──
+  {k:'rv-datepicker', sc:'复盘校验', el:'复盘日选择',
+   tx:'只能选交易日——调休上班的周末不可选（市场不开市）。交易日历见「开市日历」部分。'},
+  {k:'rv-window', sc:'复盘校验', el:'复盘区间',
+   tx:'口径：上一交易日 15:00 → 所选交易日 15:00。需严格按此切分快讯，调休休市日不计入交易日序列。'},
+  {k:'rv-matrix', sc:'复盘校验', el:'方向命中矩阵',
+   tx:'命中判定规则需产品确认：当前「持平」的阈值取 |涨跌幅| < 0.35%，这是占位值。不同板块波动率差异很大，建议按板块分别设定阈值。'},
+  {k:'rv-table', sc:'复盘校验', el:'明细对照表',
+   tx:'与矩阵共用同一判定规则。注意：实际涨跌幅是事后事实，不作为预测字段入库；系统只存预测方向。'},
+
+  // ── 开市日历 ──
+  {k:'cal-data', sc:'开市日历', el:'交易日历数据',
+   tx:'需每年按国务院办公厅通知维护节假日。关键规则：调休上班的周末仍然休市（最容易写错的地方）。建议做成可配置的数据表而不是硬编码在代码里。'},
+  {k:'cal-next', sc:'开市日历', el:'下一交易日',
+   tx:'由交易日历推导计算，不要在代码里写死日期。当前实现为向后查找第一个交易日。'},
+  {k:'cal-ics', sc:'开市日历', el:'订阅日历（.ics）',
+   tx:'生成标准 iCalendar 文件，事件为「休市」或「交易日」，供用户订阅到本地日历。'},
+
+  // ── 标的日K抽屉 ──
+  {k:'kline-drawer', sc:'标的日K抽屉', el:'日K行情数据',
+   tx:'行情接口尚未接入（见左侧「数据源」）。需提供前复权日K：开、高、低、收、成交量，默认返回 60 个交易日，并同时给出最新价与涨跌幅。均线可由前端计算，也可由接口返回。'},
+];
+
+function renderNotesScreen(){
+  const groups=[];
+  NOTES.forEach((n,i)=>{
+    let g=groups.find(x=>x.sc===n.sc);
+    if(!g){ g={sc:n.sc, items:[]}; groups.push(g); }
+    g.items.push({...n, no:i+1});
+  });
+  $('#noteBody').innerHTML = groups.map(g=>`
+    <div class="card notecard">
+      <h3>${g.sc}<span class="cnt">${g.items.length} 项待补充</span></h3>
+      ${g.items.map(n=>`
+        <div class="noterow">
+          <span class="no">${n.no}</span>
+          <div><div class="el">${n.el}</div><div class="tx">${n.tx}</div></div>
+        </div>`).join('')}
+    </div>`).join('');
+  $('#navNoteN').textContent = NOTES.length;
+}
+
+/* 角标层：每次局部渲染后重新贴一遍；正在重绘的元素上旧角标已随 innerHTML 消失 */
+function renderNotes(){
+  $$('.nt').forEach(b=>b.remove());
+  if(!document.body.classList.contains('notes')) return;
+  NOTES.forEach((n,i)=>{
+    const el=document.querySelector(`[data-note="${n.k}"]`);
+    if(!el) return;
+    const b=document.createElement('span');
+    b.className='nt'; b.textContent=i+1;
+    b.title=`【${i+1}】${n.el}｜待补充：${n.tx}`;
+    el.appendChild(b);
+  });
+}
+function toggleNotes(force){
+  const on = force!==undefined ? force : !document.body.classList.contains('notes');
+  document.body.classList.toggle('notes', on);
+  $('#noteBtn').classList.toggle('on', on);
+  $('#noteBtn').textContent = on ? '✎ 开发标注 · 开' : '✎ 开发标注';
+  const t2=$('#noteToggle2'); if(t2) t2.textContent = on ? '隐藏界面标注' : '显示界面标注';
+  renderNotes();
+}
+$('#noteBtn').addEventListener('click',()=>toggleNotes());
+$('#noteToggle2').addEventListener('click',()=>toggleNotes());
+
+/* ============================================================
+   12. 标签词云
+   字号 = 出现次数（连续量级 → 单通道），颜色 = 标签类别（身份 → 分类色板）
+   两个通道各司其职，不做"越大越深"的重复编码
+   ============================================================ */
+const TAG_STATS = [
+  ['储能',14,'行业'],['宏观政策',12,'政策'],['新能源',11,'行业'],['半导体',9,'行业'],
+  ['消费',8,'行业'],['锂电',7,'行业'],['医药',6,'行业'],['银行',6,'行业'],
+  ['汇率',5,'海外'],['国产替代',5,'政策'],['海外宏观',4,'海外'],['地产',4,'行业'],
+  ['汽车',3,'行业'],['家电',3,'行业'],['集采',3,'政策'],['外资',3,'海外'],
+  ['出口管制',2,'政策'],['光伏',2,'行业'],['军工',1,'行业'],['券商',1,'行业'],
+];
+const TAG_CAT = {政策:'var(--s1)', 行业:'var(--s2)', 海外:'var(--s3)'};
+let cloudMode = 'cloud';
+
+function renderCloud(){
+  if(cloudMode==='cloud'){
+    const vals=TAG_STATS.map(t=>t[1]), max=Math.max(...vals), min=Math.min(...vals);
+    $('#cloudWrap').innerHTML = '<div class="cloud">' + TAG_STATS.map(([t,c,cat])=>{
+      const fs=(11+(c-min)/(max-min)*19).toFixed(1);
+      return `<span class="cw" style="font-size:${fs}px;color:${TAG_CAT[cat]}"
+                title="${t}：${c} 条">${t}</span>`;
+    }).join('') + '</div>';
+    $('#cloudLegend').style.display='';
+  } else {
+    // 表格视图：词云的等价读数，颜色不单独承载信息
+    $('#cloudWrap').innerHTML = '<table class="cloudtbl">' + TAG_STATS.map(([t,c,cat])=>
+      `<tr><td>${t} <span class="cat">${cat}</span></td><td class="n">${c}</td></tr>`).join('')
+      + '</table>';
+    $('#cloudLegend').style.display='none';
+  }
+  renderNotes();
+}
+$('#cloudToggle').addEventListener('click',()=>{
+  cloudMode = cloudMode==='cloud' ? 'table' : 'cloud';
+  $('#cloudToggle').textContent = cloudMode==='cloud' ? '表格' : '词云';
+  renderCloud();
+});
+
+/* ============================================================
+   13. 2026 休市安排表
+   ============================================================ */
+function renderHolidayTable(){
+  $('#holidayBody').innerHTML = HOLIDAY_TABLE.map(([name,a,b,mk])=>{
+    const days=(parseD(b)-parseD(a))/86400000+1;
+    return `<tr style="cursor:default">
+      <td style="font-weight:600">${name}</td>
+      <td class="tnum">${a} 至 ${b}</td>
+      <td class="tnum">${days} 天</td>
+      <td class="tnum">${mk.length?mk.map(d=>`${d}（周${WD[parseD(d).getDay()]}）`).join('、'):'<span class="muted">无</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ============================================================
+   14. 启动
+   ============================================================ */
+syncTagOptions();
+renderFeed();
+loadImports();
+renderCloud();
+renderNotesScreen();
+syncFavUI();
+renderMarketBits();
+renderHolidayTable();
+renderMarketCal();
+renderRvPanel();
+openAnalysis('n1');
+renderReview();
+toggleNotes(false);
+showScreen(['feed','analysis','review','import','calendar','notes'].includes(location.hash.slice(1))
+  ? location.hash.slice(1) : 'feed');
+loadLiveNews();
+</script>
+</body>
+</html>
