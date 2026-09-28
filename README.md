@@ -31,9 +31,11 @@ FinSight/
 
 ## 本地预览
 
-直接使用浏览器打开 `frontend/index.html` 即可查看当前 UI 原型。
+当前集成新闻导入、快讯流和智能分析的可运行前端为 [`modules/news/prototype/index.html`](modules/news/prototype/index.html)，需要通过其本地 Node 服务打开，不能直接使用 `file://`。启动与配置方式见 [`modules/news/README.md`](modules/news/README.md)。
 
-新闻导入与快讯流的独立演示及配置方式见 [`modules/news/README.md`](modules/news/README.md)。
+`frontend/index.html` 与工作区外层的旧版 `财讯智析-UI原型.html` 作为早期静态原型保留，不是当前新闻功能的运行入口。
+
+新闻模块按北京时间读取最近3个自然日，每天最多展示10条，三天合计最多30条。自动新闻必须先完成DeepSeek事实摘要和结构化质量判断，再进行事件级去重和信息重要度计算；页面分类统一为宏观级、行业级、公司级、混合级。
 
 ## 协作约定
 
