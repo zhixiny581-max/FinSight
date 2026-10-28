@@ -7,8 +7,8 @@ assert.strictEqual(pipeline.INTERNATIONAL_NEWS_QUERIES.length, 6);
 assert.strictEqual(pipeline.SUPPLEMENTAL_NEWS_QUERIES.length, 3);
 assert.strictEqual(pipeline.NEWS_CANDIDATE_TARGET_PER_DAY, 12);
 assert.strictEqual(pipeline.NEWS_CANDIDATE_LIMIT_PER_DAY, 20);
-assert.strictEqual(pipeline.NEWS_FINAL_LIMIT_PER_DAY, 10);
 assert.strictEqual(pipeline.NEWS_QUALITY_BATCH_SIZE, 12);
+assert.strictEqual(pipeline.NEWS_LOOKBACK_DAYS, 7);
 
 assert.strictEqual(pipeline.normalizeNewsCategory('宏观政策'), '宏观级');
 assert.strictEqual(pipeline.normalizeNewsCategory('商品与供应链'), '行业级');
@@ -16,10 +16,18 @@ assert.strictEqual(pipeline.normalizeNewsCategory('财报业绩'), '公司级');
 assert.strictEqual(pipeline.normalizeNewsCategory('公司事件'), '公司级');
 assert.strictEqual(pipeline.normalizeNewsCategory('行业动态'), '行业级');
 
-const dates = pipeline.recentShanghaiDates(3);
-assert.strictEqual(dates.length, 3);
+const dates = pipeline.recentShanghaiDates(7);
+assert.strictEqual(dates.length, 7);
 assert.ok(dates.every(date => /^\d{4}-\d{2}-\d{2}$/.test(date)));
-assert.strictEqual((Date.parse(`${dates[0]}T00:00:00+08:00`) - Date.parse(`${dates[2]}T00:00:00+08:00`)) / 86400000, 2);
+assert.strictEqual((Date.parse(`${dates[0]}T00:00:00+08:00`) - Date.parse(`${dates[6]}T00:00:00+08:00`)) / 86400000, 6);
+
+const recentImportance = pipeline.applyNewsImportance({
+  title: '政策部门公布产业支持措施',
+  summary: '政策部门公布产业支持措施，相关供需可能变化。',
+  source: '测试来源', source_authority: 'other', published_at: dates[6], published_precision: 'date',
+  url: 'https://example.com/recent', sources: []
+});
+assert.strictEqual(recentImportance.importance_breakdown.freshness, 2);
 
 const identityA = pipeline.newsUniqueId({
   title: '同一新闻', source: '来源甲', published_at: '2026-09-28',
@@ -38,6 +46,17 @@ const passingQuality = pipeline.normalizeCachedQuality({
 });
 assert.strictEqual(pipeline.qualityPassed(passingQuality), true);
 assert.strictEqual(pipeline.qualityPassed({ ...passingQuality, quality_score: 69 }), false);
+const structuredIndirectQuality = pipeline.normalizeCachedQuality({
+  ...passingQuality,
+  a_share_relevance: 3,
+  category: '行业级',
+  core_event: '霍尔木兹海峡原油运输保持通畅',
+  impact_targets: ['国际原油价格', 'A股石油石化板块']
+});
+assert.strictEqual(pipeline.qualityPassed(structuredIndirectQuality), true);
+assert.strictEqual(pipeline.qualityPassed({ ...structuredIndirectQuality, impact_targets: [] }), false);
+assert.strictEqual(pipeline.qualityPassed({ ...structuredIndirectQuality, category: '公司级' }), false);
+assert.strictEqual(pipeline.qualityPassed({ ...structuredIndirectQuality, reject_reason: '缺少清晰传导路径' }), false);
 const opinionReport = {
   title: '宏观周报：利率主导市场定价',
   summary: '我们认为市场短期焦点仍是美债利率，建议关注相关配置机会。',

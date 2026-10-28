@@ -51,8 +51,8 @@ const LEGACY_NEWS_TAG_MAP = {
 };
 const NEWS_CANDIDATE_TARGET_PER_DAY = 12;
 const NEWS_CANDIDATE_LIMIT_PER_DAY = 20;
-const NEWS_FINAL_LIMIT_PER_DAY = 10;
 const NEWS_QUALITY_BATCH_SIZE = 12;
+const NEWS_LOOKBACK_DAYS = 7;
 const DOMESTIC_NEWS_QUERIES = [
   '影响A股市场的重大事件',
   '影响A股的宏观经济数据 货币政策 财政政策 产业政策',
@@ -255,14 +255,21 @@ function deterministicQualityRejectReason(item) {
 }
 
 function qualityPassed(quality, item = null) {
-  return Boolean(quality
-    && quality.content_type === '事实新闻'
+  if (!quality) return false;
+  const basePassed = quality.content_type === '事实新闻'
     && Number(quality.quality_score) >= 70
-    && Number(quality.a_share_relevance) >= 4
     && Number(quality.factuality) >= 4
     && Number(quality.materiality) >= 3
     && FIXED_NEWS_TAGS.includes(quality.category)
-    && !deterministicQualityRejectReason(item));
+    && !deterministicQualityRejectReason(item);
+  if (!basePassed) return false;
+  if (Number(quality.a_share_relevance) >= 4) return true;
+  const structuredTransmission = Number(quality.a_share_relevance) === 3
+    && !textValue(quality.reject_reason)
+    && ['宏观级', '行业级', '混合级'].includes(quality.category)
+    && textValue(quality.core_event).length >= 6
+    && arrayOfText(quality.impact_targets, 12).length > 0;
+  return structuredTransmission;
 }
 
 function readSummaryCache() {
@@ -875,6 +882,7 @@ async function requestDeepSeekSummaryBatch(newsItems) {
 
 以下内容必须从严处理：没有新增事实的重复报道；与A股缺少清晰传导关系的海外新闻；普通美债收益率每日涨跌且没有明确政策冲击；核心事件发生在4个月以前且没有新的实施、数据、进展或政策变化；缺少经济后果的普通外交表态。
 以下国际事件若存在清晰A股影响链，应视为有效候选：主要央行政策和流动性变化、关税和制裁、科技出口管制、大宗商品供应变化、战争和地缘冲突、关键航道变化、全球供应链中断以及显著改变风险偏好的重大事件。
+对事实明确、quality_score不低于70、factuality不低于4、materiality不低于3的宏观级、行业级或混合级新闻，若能在impact_targets中明确写出A股受影响的行业、商品、供应链或市场变量，a_share_relevance可评为3，reject_reason应保持为空，不得仅因为是间接传导就拒绝。
 
 必须保留每条资料的 id，只输出合法JSON，不要输出Markdown或解释文字。格式为：
 {"items":[{"id":"原id","summary":"事实摘要","content_type":"事实新闻","quality_score":80,"a_share_relevance":4,"factuality":5,"materiality":4,"category":"宏观级","reject_reason":"","core_event":"核心事件","subjects":["主体"],"event_date":"YYYY-MM-DD","impact_targets":["影响对象"]}]}`;
@@ -1321,8 +1329,9 @@ function applyNewsImportance(item) {
   const published = dateNumberInShanghai(item.published_at);
   const ageDays = Number.isFinite(today) && Number.isFinite(published)
     ? Math.max(0, Math.floor((today - published) / 86400000))
-    : 3;
-  const freshness = ageDays === 0 ? 15 : ageDays === 1 ? 10 : ageDays === 2 ? 6 : 0;
+    : NEWS_LOOKBACK_DAYS;
+  const freshnessByAge = [15, 12, 10, 8, 6, 4, 2];
+  const freshness = freshnessByAge[ageDays] || 0;
   const authority = {
     official: 20,
     exchange: 18,
@@ -1369,8 +1378,9 @@ function applyNewsImportance(item) {
   const score = Math.min(100, freshness + authority + materiality + directness + evidence + coverage);
   const stars = score >= 88 ? 5 : score >= 72 ? 4 : score >= 55 ? 3 : score >= 38 ? 2 : 1;
   const reasons = [];
-  if (freshness === 15) reasons.push('今天发布');
-  else if (freshness === 10) reasons.push('昨日发布');
+  if (Number.isFinite(published) && freshness === 15) reasons.push('今天发布');
+  else if (Number.isFinite(published) && ageDays === 1) reasons.push('昨日发布');
+  else if (Number.isFinite(published) && ageDays <= 6) reasons.push(`${ageDays}天前发布`);
   if (authority >= 20) reasons.push('官方或监管来源');
   else if (authority >= 17) reasons.push('交易所或公司正式披露');
   else if (authority >= 14) reasons.push('主流财经媒体来源');
@@ -1972,10 +1982,11 @@ function inferIndustryNamesFromNews(news) {
   }));
 }
 
-async function fetchLiveNews(query) {
+async function fetchLiveNews(query, options = {}) {
   if (!hasUsableIfindConfig()) throw new Error('IFIND_NOT_CONFIGURED');
   const { call } = getIfindClient();
-  const dates = recentShanghaiDates(3);
+  const requestedDates = Array.isArray(options.dates) ? options.dates : [];
+  const dates = requestedDates.length ? requestedDates : recentShanghaiDates(NEWS_LOOKBACK_DAYS);
   const fixedQueries = [...DOMESTIC_NEWS_QUERIES, ...INTERNATIONAL_NEWS_QUERIES];
   const queryLog = [];
   const candidatesByDate = new Map(dates.map(date => [date, new Map()]));
@@ -2020,15 +2031,14 @@ async function fetchLiveNews(query) {
   const candidates = dates.flatMap(date => [...candidatesByDate.get(date).values()]
     .sort((a, b) => candidateScore(b) - candidateScore(a))
     .slice(0, NEWS_CANDIDATE_LIMIT_PER_DAY));
-  if (!candidates.length) throw new Error('IFIND_EMPTY_RESULT');
+  if (!candidates.length && !options.allowEmpty) throw new Error('IFIND_EMPTY_RESULT');
 
   const processed = await enrichNewsSummaries(candidates);
   const deduplicated = deduplicateProcessedNews(processed.items);
   const finalItems = dates.flatMap(date => deduplicated.items
     .filter(item => textValue(item.published_at).slice(0, 10) === date)
     .sort((a, b) => Number(b.importance_score || 0) - Number(a.importance_score || 0)
-      || String(b.published_at || '').localeCompare(String(a.published_at || '')))
-    .slice(0, NEWS_FINAL_LIMIT_PER_DAY));
+      || String(b.published_at || '').localeCompare(String(a.published_at || ''))));
   finalItems.sort((a, b) => String(b.published_at || '').localeCompare(String(a.published_at || ''))
     || Number(b.importance_score || 0) - Number(a.importance_score || 0));
 
@@ -2701,10 +2711,19 @@ async function handleRequest(request, response) {
   if (request.method === 'GET' && requestUrl.pathname === '/api/news') {
     const query = String(requestUrl.searchParams.get('q') || '').slice(0, 120);
     const refreshFeed = requestUrl.searchParams.get('refresh_feed') === '1';
-    const importedItems = refreshFeed ? [] : confirmedImportedNews();
+    const requestedDate = String(requestUrl.searchParams.get('date') || '').trim();
+    const allowedDates = recentShanghaiDates(NEWS_LOOKBACK_DAYS);
+    if (requestedDate && !allowedDates.includes(requestedDate)) {
+      return sendJson(response, 400, { ok: false, error: '只能查询最近7个自然日内的新闻。' });
+    }
+    const includeImports = !requestedDate || requestUrl.searchParams.get('include_imports') === '1';
+    const importedItems = !refreshFeed && includeImports ? confirmedImportedNews() : [];
+    const requeuedImportCount = refreshFeed ? requeueConfirmedImports() : 0;
     try {
-      const newsResult = await fetchLiveNews(query);
-      const requeuedImportCount = refreshFeed ? requeueConfirmedImports() : 0;
+      const newsResult = await fetchLiveNews(query, {
+        dates: requestedDate ? [requestedDate] : allowedDates,
+        allowEmpty: Boolean(requestedDate)
+      });
       const combined = [];
       for (const item of [...importedItems, ...newsResult.items]) {
         if (!combined.some(existing => likelySameNews(existing, item))) combined.push(item);
@@ -2735,10 +2754,17 @@ async function handleRequest(request, response) {
           summary_mode: 'import_only',
           summary_error: safeErrorCode(error),
           summary_stats: { candidates: 0, cache_hits: 0, generated: 0, quality_rejected: 0, processing_failed: 0, duplicate_removed: 0, final_count: importedItems.length },
-          manual_import_count: importedItems.length
+          manual_import_count: importedItems.length,
+          requeued_import_count: requeuedImportCount
         });
       }
-      return sendJson(response, 200, { ok: false, mode: 'mock', items: [], reason: safeErrorCode(error) });
+      return sendJson(response, 200, {
+        ok: false,
+        mode: 'mock',
+        items: [],
+        reason: safeErrorCode(error),
+        requeued_import_count: requeuedImportCount
+      });
     }
   }
 
@@ -2831,8 +2857,8 @@ module.exports = {
   SUPPLEMENTAL_NEWS_QUERIES,
   NEWS_CANDIDATE_TARGET_PER_DAY,
   NEWS_CANDIDATE_LIMIT_PER_DAY,
-  NEWS_FINAL_LIMIT_PER_DAY,
   NEWS_QUALITY_BATCH_SIZE,
+  NEWS_LOOKBACK_DAYS,
   companyNameKey,
   stockMatchesDirectEntity,
   stockMatchesListedParent,
