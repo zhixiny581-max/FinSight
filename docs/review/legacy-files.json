@@ -1,0 +1,207 @@
+{
+  "version": "V1",
+  "algorithm": "sha256",
+  "baseline_commit": "cd692335db285e5140a5e62c54e08a96f124e6dc",
+  "files": [
+    {
+      "path": ".env.example",
+      "hash": "39be5e71e97db9595988906a58a30773ea3bb088f73b3b824e788ab29b356fdc"
+    },
+    {
+      "path": "eval/.gitkeep",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "eval/test_market_calendar.py",
+      "hash": "7c402b48e8369f1ef2e753518e83354df991d9162e3c1d1b4414d227383629fd"
+    },
+    {
+      "path": "eval/test_market_ifind.py",
+      "hash": "337810607bec97a4279a3e2850fa93dd99a71931fb82fdc7bfd5b643d405fd95"
+    },
+    {
+      "path": "eval/test_market_symbols.py",
+      "hash": "edcd97aa5047a49262f41049d0e599b656b612493c34d81b754069284949d5a6"
+    },
+    {
+      "path": "frontend/index.html",
+      "hash": "5c070875d858bf508397a28bc0d658ee4335aaad0edd48378bde30b9cf95bc59"
+    },
+    {
+      "path": "modules/analysis/.gitkeep",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "modules/analysis/HANDOFF.md",
+      "hash": "c109a287e7f718c881a5aa69015ae3f97639a0fd9be03743913bcad474e7ac61"
+    },
+    {
+      "path": "modules/analysis/SKILL.md",
+      "hash": "61624cd4b14d3438ed1a7e3cdea8019eaa316d881c4bd236d3202b597c5bd109"
+    },
+    {
+      "path": "modules/analysis/analysis_service.js",
+      "hash": "deb1544cc7c4bebb31d9c04a7cded7f92b9e36a7cfe325011103254ed1792f25"
+    },
+    {
+      "path": "modules/analysis/prompts/impact-analysis.txt",
+      "hash": "b5e86532165eb180513e6f22855e0a7aa25d03ccf4c072f30b58c1e8ccde7c12"
+    },
+    {
+      "path": "modules/analysis/references/analysis-contract.md",
+      "hash": "51a8519bfab33b0edcc0021de0b180f9b6a07e74f4dca056a9a6c0f74108a416"
+    },
+    {
+      "path": "modules/analysis/references/kline.md",
+      "hash": "b06fec8fb7595c4fc5d068d028857fc1ca27fe5b456143088102f0007a9e2762"
+    },
+    {
+      "path": "modules/analysis/scripts/validate-analysis.js",
+      "hash": "fc1dd47ae6b57f397269ee693539d68a765166ee976ea586416e2c2408c3332d"
+    },
+    {
+      "path": "modules/analysis/test-analysis-service.js",
+      "hash": "0b52ca383393442db1345b33a31f957045ba4a334b08d06ed4aee19a7409c16f"
+    },
+    {
+      "path": "modules/market/.env.example",
+      "hash": "2d8e0c268319c4a46f24c6f2a16f931a47139d9e6e9eca9a0b1540bc2251cf1e"
+    },
+    {
+      "path": "modules/market/.gitkeep",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "modules/market/FRONTEND_CONTRACT.md",
+      "hash": "dd72e04712ea3c8c12a97e021a915d5ceb9ee22fbce2ea5de98ae861510c70a3"
+    },
+    {
+      "path": "modules/market/IFIND_MCP.md",
+      "hash": "b83fddba34305e6d68d23fe2b0d0a77178aec3a134d7111b30cac982d9f01122"
+    },
+    {
+      "path": "modules/market/README.md",
+      "hash": "6c862d61096756d1f2074de5054da541335bc93c5428d579843420ba882302e6"
+    },
+    {
+      "path": "modules/market/__init__.py",
+      "hash": "c92d4ce102ab625ad0dc8ce01667be1dee49b24ed4f5ab587b7b838db7dd0874"
+    },
+    {
+      "path": "modules/market/app.py",
+      "hash": "84b92913f29412e4b06d4b487435e656981ae48f0793e771e1be18f57b6d547e"
+    },
+    {
+      "path": "modules/market/calendar_service.py",
+      "hash": "bfe6e72f4e109ba68800d1e3629e1fd400dd5871f6bfd74beb6e5fa5ad45421d"
+    },
+    {
+      "path": "modules/market/data/calendar.json",
+      "hash": "2c604a004e1b7a363d3c40d2e0dc4e77c79129f9f3114f26b5cfb75c79bd47b9"
+    },
+    {
+      "path": "modules/market/errors.py",
+      "hash": "875f62cd92ee620b7f7c58cfcb7afb382469868c9f9fb2f17d2e9962dcc796be"
+    },
+    {
+      "path": "modules/market/ifind_mcp.py",
+      "hash": "c29e32622d2403a3e7a676c1d023bbf00ddb38390d1a0ab2f19f2ce8489532ec"
+    },
+    {
+      "path": "modules/market/ifind_parser.py",
+      "hash": "6558f58aaa2bb1602e782646bba145c6ce0c2d96c91f5a958e513f39e0118e0d"
+    },
+    {
+      "path": "modules/market/market_service.py",
+      "hash": "e230b9e34f055aeb134d3f72fe917f1614e6c0dacfff86db698116dcd86a33c7"
+    },
+    {
+      "path": "modules/market/prompts/daily_kline.txt",
+      "hash": "e077548cb02c6fe05c3b5a4eed5bc2ee43a707f05f255edc11f8d5af7449931e"
+    },
+    {
+      "path": "modules/market/requirements-dev.txt",
+      "hash": "354af8f2cc1e3af850291090fcdabbf7a96f5dd1708bcc350d74dd02bbe7d2f3"
+    },
+    {
+      "path": "modules/market/requirements.txt",
+      "hash": "cce81787a5ed043ceb75c4df72046ea6a30c67c9709552f894de61e860a03677"
+    },
+    {
+      "path": "modules/market/start.ps1",
+      "hash": "ffc57d63b8812dc33600cae6f975d5bd46dfadb5fae41910615259d98da67bd3"
+    },
+    {
+      "path": "modules/market/symbols.py",
+      "hash": "1b9cc7455692b8d7232d0467ec9b78d0e194579f1e6b490141404e7db7e3ea31"
+    },
+    {
+      "path": "modules/news/.gitkeep",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "modules/news/README.md",
+      "hash": "54cef369acd4acf437ee5711e0176aa9fcd4301cf7975546802715d647d30563"
+    },
+    {
+      "path": "modules/news/prototype/.env.example",
+      "hash": "3bab49b0f992c3203bc836b0781d542dc5815f7e2d86c6aa2d55169e50f2caca"
+    },
+    {
+      "path": "modules/news/prototype/.gitignore",
+      "hash": "2c29bb2cb1595352a9297a41233c6fd3b944a44f1946297fd2c911599a085f8e"
+    },
+    {
+      "path": "modules/news/prototype/README.md",
+      "hash": "a353d385c305dce5cc1fbe571ae9b19e9c811c62b9d58fb6d55d2e05773cf86b"
+    },
+    {
+      "path": "modules/news/prototype/ifind_client.js",
+      "hash": "8b56af50f8a962c0cbb667101c3a825aa9a382fac20603b3f53915b049822681"
+    },
+    {
+      "path": "modules/news/prototype/index-core.html",
+      "hash": "3214a604d2a7c10e0d3583ba02a53530533ef2dc285899b2a6563102316388cd"
+    },
+    {
+      "path": "modules/news/prototype/index.html",
+      "hash": "921bd94d5e90a3f023d541e1502d3b17fca3507ed487f8e50249e840b3f0e96a"
+    },
+    {
+      "path": "modules/news/prototype/news-processing/SKILL.md",
+      "hash": "c7299f890a38842732edb19ee86951211cc36c82993db6a695e45ff5ac206218"
+    },
+    {
+      "path": "modules/news/prototype/news-processing/references/source-ranking.md",
+      "hash": "e2c779b33968b6b57d1dbd7191e4e149694acad1504b5204389bf1486c87d1da"
+    },
+    {
+      "path": "modules/news/prototype/package.json",
+      "hash": "96bc21faa2efd1ec23620b6716b250156eea038f32451de98a82a5011a0d8c4c"
+    },
+    {
+      "path": "modules/news/prototype/package.ps1",
+      "hash": "c60ec14fc4ce97b922dc6a8c6412ba90fbf22824d67d50a287b3c730e942fc73"
+    },
+    {
+      "path": "modules/news/prototype/server.js",
+      "hash": "4c39e7a07b25b2f62c1299ffe124561800e99f962806dab98af8d72ec6637b32"
+    },
+    {
+      "path": "modules/news/prototype/start.ps1",
+      "hash": "8530d1e3756b58e197b3a4d158a80cb1e4b5e16d39ee6941e332514c6da4e450"
+    },
+    {
+      "path": "modules/news/prototype/test-news-pipeline.js",
+      "hash": "417b75e756f4ef1064fcf2c1dae904b0a7a3c3904aee783ddf5ddac7a5083022"
+    },
+    {
+      "path": "modules/news/prototype/启动FinSight.cmd",
+      "hash": "653aa7fb5da4b0858b985d5de5e45e30957bf72e1db9f059e2b218e621b3d0ed"
+    },
+    {
+      "path": "modules/news/prototype/打包分享.cmd",
+      "hash": "ddb173a93b3a873640abf26c543feaa6f783c7413ddf79c917c68bc48197cd58"
+    }
+  ]
+}

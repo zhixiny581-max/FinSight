@@ -1,0 +1,345 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "FinSight｜新版分析模块如何工作",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "docs/presentation/new-analysis/new-analysis.html",
+    "repository": {
+      "url": "https://github.com/zhixiny581-max/FinSight.git",
+      "revision": "222dc4d34d310d070f3c2a7596641e6f2b5fc708",
+      "link_mode": "local-only"
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "主流程 · 从新闻到条件性分析"
+    },
+    {
+      "id": "optional",
+      "label": "按需能力 · 补证回路与独立行情"
+    }
+  ],
+  "phases": [
+    {
+      "id": "input",
+      "label": "固定材料与分析时点",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "reason",
+      "label": "推演与检查",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "output",
+      "label": "公司关联与展示",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "news",
+    "market",
+    "reason",
+    "check",
+    "companies",
+    "result"
+  ],
+  "nodes": [
+    {
+      "id": "news",
+      "lane": "main",
+      "col": 0,
+      "type": "frontend",
+      "label": "固定新闻输入",
+      "sublabel": "摘要/全文/来源/发布时间",
+      "tag": "分析不改写摘要",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/news/prototype/index-core.html",
+          "line": 2343,
+          "end_line": 2358
+        },
+        {
+          "path": "versions/feedback/modules/news/prototype/index-core.html",
+          "line": 2632,
+          "end_line": 2635
+        }
+      ]
+    },
+    {
+      "id": "market",
+      "lane": "main",
+      "col": 1,
+      "type": "backend",
+      "label": "取得事前行情",
+      "sublabel": "上海时区；截止新闻时点",
+      "tag": "避免使用后续数据",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/news/prototype/server.js",
+          "line": 2445,
+          "end_line": 2464
+        },
+        {
+          "path": "versions/feedback/modules/analysis/feedback-market.js",
+          "line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "id": "reason",
+      "lane": "main",
+      "col": 2,
+      "type": "backend",
+      "label": "生成条件性推演",
+      "sublabel": "范围/板块/条件/反向路径",
+      "tag": "模型负责分析",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 26,
+          "end_line": 32
+        },
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 81,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "lane": "main",
+      "col": 3,
+      "type": "security",
+      "label": "核对结构和依据",
+      "sublabel": "声明事实的引用及资料时点",
+      "tag": "检查通过再往下",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 13,
+          "end_line": 15
+        },
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 66,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "companies",
+      "lane": "main",
+      "col": 4,
+      "type": "backend",
+      "label": "关联真实公司",
+      "sublabel": "iFinD查询；引用板块方向",
+      "tag": "不做逐家公司研究",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/news/prototype/server.js",
+          "line": 2470,
+          "end_line": 2484
+        },
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 74,
+          "end_line": 114
+        }
+      ]
+    },
+    {
+      "id": "result",
+      "lane": "main",
+      "col": 5,
+      "type": "frontend",
+      "label": "展示分析结果",
+      "sublabel": "按范围显示；相关公司清单",
+      "tag": "宏观级减少两块",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/news/prototype/index-core.html",
+          "line": 2463,
+          "end_line": 2489
+        },
+        {
+          "path": "versions/feedback/modules/news/prototype/index-core.html",
+          "line": 2640,
+          "end_line": 2658
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "lane": "optional",
+      "col": 2,
+      "type": "external",
+      "label": "按需查询资料",
+      "sublabel": "iFinD/网页；可选网页搜索",
+      "tag": "最多2轮/6次",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 34,
+          "end_line": 64
+        },
+        {
+          "path": "versions/feedback/modules/analysis/evidence_tools.js",
+          "line": 12,
+          "end_line": 18
+        }
+      ]
+    },
+    {
+      "id": "revise",
+      "lane": "optional",
+      "col": 3,
+      "type": "backend",
+      "label": "回传资料并修订",
+      "sublabel": "实际结果或失败反馈模型",
+      "tag": "受时间预算限制",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 49,
+          "end_line": 64
+        },
+        {
+          "path": "versions/feedback/modules/analysis/feedback-service.js",
+          "line": 81,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "latest",
+      "lane": "optional",
+      "col": 4,
+      "type": "backend",
+      "label": "独立查询全A",
+      "sublabel": "默认最新；也可查新闻前",
+      "tag": "不写回模型输入",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/news/prototype/server.js",
+          "line": 1846,
+          "end_line": 1876
+        },
+        {
+          "path": "versions/feedback/modules/news/prototype/index-core.html",
+          "line": 2581,
+          "end_line": 2600
+        }
+      ]
+    },
+    {
+      "id": "chart",
+      "lane": "optional",
+      "col": 5,
+      "type": "frontend",
+      "label": "观察市场行情",
+      "sublabel": "双视图切换；标记新闻日",
+      "tag": "各新闻层级均展示",
+      "sources": [
+        {
+          "path": "versions/feedback/modules/news/prototype/index-core.html",
+          "line": 2541,
+          "end_line": 2580
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "news",
+      "to": "market",
+      "role": "main"
+    },
+    {
+      "from": "market",
+      "to": "reason",
+      "role": "main"
+    },
+    {
+      "from": "reason",
+      "to": "check",
+      "label": "无需或完成补证",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "companies",
+      "role": "main"
+    },
+    {
+      "from": "companies",
+      "to": "result",
+      "role": "main"
+    },
+    {
+      "from": "reason",
+      "to": "tools",
+      "label": "需要且预算允许",
+      "role": "branch"
+    },
+    {
+      "from": "tools",
+      "to": "revise",
+      "label": "实际返回",
+      "role": "main"
+    },
+    {
+      "from": "revise",
+      "to": "reason",
+      "label": "根据资料修订",
+      "role": "return"
+    },
+    {
+      "from": "result",
+      "to": "latest",
+      "label": "独立请求",
+      "role": "branch"
+    },
+    {
+      "from": "latest",
+      "to": "chart",
+      "label": "实际日K",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "先讲新版怎么工作",
+      "items": [
+        "模型分析事件与板块的粗方向、成立条件、反向路径和验证指标；公司只列真实关联名单。",
+        "宏观级隐藏直接影响和产业链两块；混合型有实质行业路径时保留。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "补证是按需回路",
+      "items": [
+        "不需要补证且首稿有效时只需一次模型调用；最多2轮、6次工具调用，整个请求上限240秒。",
+        "后台检查结构、声明事实的引用和资料时点，保存本机记录；无效修订保留上一份有效结果。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "再解释这轮为什么调整",
+      "items": [
+        "补证进入模型修订、规范公司名单口径、统一时间与统计窗口，并把最新观察与事前分析分开。",
+        "本图为课堂主链概览，省略逐字段校验、个股抽屉和异常回退细节；详细说明见讲解稿。"
+      ]
+    }
+  ]
+}

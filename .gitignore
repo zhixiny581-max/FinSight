@@ -39,3 +39,7 @@ FinSight-news-prototype-*.zip
 !modules/market/data/
 modules/market/data/*
 !modules/market/data/calendar.json
+
+# 流程图可重生成的本机校验回执
+docs/presentation/new-analysis/*.json
+!docs/presentation/new-analysis/candidate.json

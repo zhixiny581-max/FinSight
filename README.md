@@ -99,6 +99,7 @@ npm --prefix modules/news/prototype test
 npm --prefix versions/feedback/modules/news/prototype run check
 npm --prefix versions/feedback/modules/news/prototype test
 node tools/test-release.cjs
+node tools/check-legacy.cjs
 node tools/prepare-release.cjs --check
 ```
 
