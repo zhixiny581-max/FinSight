@@ -587,24 +587,6 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
 .footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-3);
   display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 
-/* ---------- 开发交接标注 ---------- */
-/* 徽标绝对定位，不参与排版；.fav 本身已是 absolute，须排除，否则会被改成 relative 而错位 */
-.nt{display:none}
-body.notes [data-note]:not(.fav):not(.news){position:relative}
-body.notes .nt{display:grid;place-items:center;position:absolute;top:-7px;right:-7px;
-  min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--s2);color:#fff;
-  font-size:10px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
-  box-shadow:0 0 0 2px var(--surface);z-index:6;cursor:help}
-body.notes .news>.nt{top:auto;bottom:9px;right:9px}
-/* 整卡角标落在右下角，与"已关联 N 只标的"同排，给该行留出空位避免叠字 */
-body.notes .news .acts{padding-right:26px}
-/* 收藏按钮自身已是定位元素，角标改挂其右下，避开 ☆ 字形 */
-body.notes .fav>.nt{top:auto;bottom:-8px;right:-8px}
-body.notes [data-note]{outline:1px dashed color-mix(in srgb,var(--s2) 45%,transparent);outline-offset:3px}
-body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
-#noteBtn.on{background:var(--s2);border-color:var(--s2);color:#fff}
-#noteBtn.on:hover{filter:brightness(1.08)}
-
 /* ---------- 标签词云 ---------- */
 .cloud{display:flex;flex-wrap:wrap;gap:1px 11px;align-items:baseline;padding:6px 0 2px}
 .cw{font-weight:650;letter-spacing:-.2px;line-height:1.3;cursor:default;transition:opacity .15s}
@@ -615,20 +597,6 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
 .cloudtbl .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);font-weight:600}
 .cloudtbl .cat{font-size:11px;color:var(--ink-3)}
 
-/* ---------- 交接清单 ---------- */
-.notegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px;align-items:start}
-.notecard{padding:16px 18px}
-.notecard h3{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.notecard h3 .cnt{font-size:11px;font-weight:500;color:var(--ink-3)}
-.noterow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;padding:11px 0;
-  border-top:1px solid var(--border);align-items:start}
-.noterow:first-of-type{border-top:0}
-.noterow .no{width:19px;height:19px;border-radius:9.5px;background:var(--s2);color:#fff;
-  font-size:10.5px;font-weight:700;display:grid;place-items:center;margin-top:1px;
-  font-variant-numeric:tabular-nums;flex:none}
-.noterow .el{font-size:12.5px;font-weight:650;margin-bottom:3px}
-.noterow .tx{font-size:12.5px;color:var(--ink-2);line-height:1.65}
-.noterow .tx code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:11.5px}
 </style>
 </head>
 <body>
@@ -639,8 +607,7 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
     <div class="mark">智</div>
     <div>财讯智析 FinSight<div class="sub">财经新闻 · 影响推演工作台</div></div>
   </div>
-  <!-- data-note 挂在 .searchbox 而非 input 上：input 是空元素，无法承载角标 -->
-  <div class="searchbox" data-note="feed-search">
+  <div class="searchbox">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input id="feedSearch" placeholder="搜索快讯 / 股票代码 / 标签…">
@@ -648,7 +615,6 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
   <div class="spacer"></div>
   <span class="mkt-tag" id="mktTag">—</span>
   <span class="demo-tag" id="dataModeTag">● 正在连接真实数据…</span>
-  <button class="btn sm" id="noteBtn" title="显示/隐藏「待补充内容」开发标注">✎ 开发标注</button>
   <button class="icon-btn" id="themeBtn" title="切换深浅色">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 3a9 9 0 109 9 7 7 0 01-9-9z"/></svg>
@@ -665,7 +631,6 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
     <div class="nav-item" data-screen="import"><span class="ico">⊕</span>新闻导入<span class="badge" id="navImp">1</span></div>
     <div class="nav-label">工具</div>
     <div class="nav-item" data-screen="calendar"><span class="ico">▦</span>开市日历</div>
-    <div class="nav-item" data-screen="notes"><span class="ico">✎</span>开发交接<span class="badge" id="navNoteN">0</span></div>
     <div class="src-panel">
       <div class="nav-label">数据源</div>
       <div class="src-row"><span class="dot ok" id="ifindNewsDot"></span><span id="ifindNewsSource">iFinD · 财经新闻</span></div>
@@ -683,20 +648,20 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
           <div class="desc" id="feedDesc">iFinD 财经新闻 · 最近7天（含今天）· AI按需分析 · 正在读取最新新闻</div>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn sm" id="feedRefreshBtn" data-note="feed-refresh">⟳ 手动刷新</button>
+          <button class="btn sm" id="feedRefreshBtn">⟳ 手动刷新</button>
         </div>
       </div>
 
       <!-- 筛选行：统一作用于下方全部内容 -->
       <div class="filterbar">
         <label>日期</label>
-        <div class="pop" id="datePop" data-note="feed-datepicker">
+        <div class="pop" id="datePop">
           <button class="btn sm" id="dateBtn">全部日期 ▾</button>
           <div class="pop-panel scroll" id="datePanel"></div>
         </div>
 
         <label>信息重要度</label>
-        <div class="seg" data-filter="stars" data-note="feed-stars">
+        <div class="seg" data-filter="stars">
           <button class="on" data-v="0">全部</button>
           <button data-v="1"><span class="st">★</span>1</button>
           <button data-v="2"><span class="st">★</span>2</button>
@@ -706,7 +671,7 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
         </div>
 
         <!-- 角标挂在 selwrap 上：select 只能含 option，挂在其上会被解析丢弃 -->
-        <span class="selwrap" data-note="feed-tagfilter">
+        <span class="selwrap">
           <select class="select" data-filter="tag">
             <option value="all">全部标签</option>
             <option>宏观级</option><option>行业级</option><option>公司级</option><option>混合级</option>
@@ -715,8 +680,8 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
 
         <div class="spacer" style="flex:1"></div>
 
-        <button class="btn sm" id="favFilterBtn" data-note="feed-favfilter">★ 仅看收藏</button>
-        <span class="selwrap" data-note="feed-sort">
+        <button class="btn sm" id="favFilterBtn">★ 仅看收藏</button>
+        <span class="selwrap">
           <select class="select" data-filter="sort">
             <option value="time">按时间倒序</option>
             <option value="stars">按信息重要度</option>
@@ -743,12 +708,12 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
             <div class="muted" style="font-size:11px;margin-top:9px;line-height:1.5" id="weekNote"></div>
           </div>
 
-          <div class="card" data-note="feed-hot">
+          <div class="card">
             <div class="sec-title" style="padding:13px 14px 0;margin-bottom:6px">信息重要度榜</div>
             <div class="hotlist scroll" id="hotList"></div>
           </div>
 
-          <div class="card" style="padding:14px" data-note="feed-wordcloud">
+          <div class="card" style="padding:14px">
             <div class="sec-title" style="margin-bottom:6px">
               标签词云
               <button class="btn sm" id="cloudToggle" style="margin-left:auto;font-weight:400">表格</button>
@@ -778,7 +743,7 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
           <h1>新闻导入</h1>
           <div class="desc">导入自采或第三方新闻，完成打标确认后进入快讯流与推演队列</div>
         </div>
-        <button class="btn sm primary" id="importTagBtn" data-note="imp-confirm">开始打标</button>
+        <button class="btn sm primary" id="importTagBtn">开始打标</button>
       </div>
 
       <div class="imp-grid">
@@ -794,13 +759,13 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
             </div>
 
             <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
-              <button class="btn sm primary" id="importBtn" data-note="imp-parse">解析并入库</button>
+              <button class="btn sm primary" id="importBtn">解析并入库</button>
               <button class="btn sm" id="importClearBtn">清空</button>
               <span class="muted" id="importStatus" style="font-size:11.5px">入库后状态为“待打标”，需确认标签与信息重要度</span>
             </div>
           </div>
 
-          <div class="card" style="padding:16px 18px" data-note="imp-table">
+          <div class="card" style="padding:16px 18px">
             <div class="sec-title">导入记录</div>
             <div class="tblwrap scroll">
               <table class="tbl">
@@ -849,7 +814,7 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn sm" id="backToFeed">← 返回快讯流</button>
-          <button class="btn sm" id="anaRun" data-note="ana-reanalyze">开始 AI 分析</button>
+          <button class="btn sm" id="anaRun">开始 AI 分析</button>
         </div>
       </div>
 
@@ -900,7 +865,7 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
             <span class="chip flat" id="macroGate">— 宏观门槛待判断</span>
           </div>
 
-          <div class="card macro-panel" id="macroPanel" data-note="ana-macro">
+          <div class="card macro-panel" id="macroPanel">
             <div class="macro-head">
               <div>
                 <div class="sec-title" style="margin-bottom:6px">宏观与市场影响</div>
@@ -933,12 +898,12 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
             <div id="directImpactList" class="muted" style="font-size:12.5px;line-height:1.7">点击“开始 AI 分析”后显示新闻直接参与方及影响机制。</div>
           </div>
 
-          <div class="card" id="industryPanel" style="padding:16px 18px;margin-bottom:16px" data-note="ana-industries">
+          <div class="card" id="industryPanel" style="padding:16px 18px;margin-bottom:16px">
             <div class="sec-title">可能受影响的行业</div>
             <div id="industryList" class="muted" style="font-size:12.5px;line-height:1.7">点击“开始 AI 分析”后显示行业判断。</div>
           </div>
 
-          <div class="card chain" id="chainPanel" data-note="ana-chain">
+          <div class="card chain" id="chainPanel">
             <div class="chain-panel-head">
               <div class="sec-title">事件影响与产业链传导路径 <span class="muted" style="font-weight:400;font-size:11px">（直接对象可重复展示，行业层仅在经营变量扩散时生成）</span></div>
               <button class="btn sm chain-expand-btn" id="chainExpandBtn" type="button" aria-haspopup="dialog" aria-controls="chainExpandDialog" aria-expanded="false" title="放大查看完整传导路径">⛶ 放大查看</button>
@@ -946,7 +911,7 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
             <div class="chain-cols scroll" id="chainCols"></div>
           </div>
 
-          <div class="card" id="stockPanel" style="padding:16px 18px;margin-bottom:16px" data-note="ana-table">
+          <div class="card" id="stockPanel" style="padding:16px 18px;margin-bottom:16px">
             <div class="stock-filterbar">
               <div class="sec-title" style="margin-bottom:0">相关公司清单 <span class="muted" style="font-weight:400;font-size:11px">（点击行查看日 K）</span></div>
               <div class="stock-filter-controls">
@@ -1000,10 +965,10 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
       <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
         <div class="tile"><div class="k">本月交易日</div><div class="v tnum" id="calOpenN">—</div><div class="d" id="calMonthLabel">—</div></div>
         <div class="tile"><div class="k">休市</div><div class="v tnum" id="calClosedN">—</div><div class="d">含周末与法定节假日</div></div>
-        <div class="tile" data-note="cal-next"><div class="k">下一交易日</div><div class="v" id="calNext" style="font-size:22px">—</div><div class="d" id="calNextD">—</div></div>
+        <div class="tile"><div class="k">下一交易日</div><div class="v" id="calNext" style="font-size:22px">—</div><div class="d" id="calNextD">—</div></div>
       </div>
 
-      <div class="card" style="padding:18px" data-note="cal-data">
+      <div class="card" style="padding:18px">
         <div class="cal-hd">
           <div class="m" id="calTitle">—</div>
           <div class="cal-nav">
@@ -1034,27 +999,6 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
           调休上班日虽是工作日，但沪深交易所不安排交易，因此仍计为休市。
         </div>
       </div>
-    </section>
-
-    <!-- ================= 开发交接 ================= -->
-    <section class="screen" id="s-notes">
-      <div class="page-head">
-        <div>
-          <h1>开发交接</h1>
-          <div class="desc">界面中每个可点击元素对应的「待补充内容」清单 · 用于数据接入与逻辑实现</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn sm" id="noteToggle2">隐藏界面标注</button>
-          <button class="btn sm primary">导出为 Markdown</button>
-        </div>
-      </div>
-
-      <div class="window" style="margin-bottom:18px">
-        <b>怎么用</b>
-        <span>打开右上角「✎ 开发标注」后，界面里每个需要补逻辑的元素上会出现与下方编号对应的角标，鼠标悬停可看简短说明；此处是完整清单。</span>
-      </div>
-
-      <div class="notegrid" id="noteBody"></div>
     </section>
 
   </main>
@@ -1136,7 +1080,7 @@ body.notes .fav,body.notes .select,body.notes .icon-btn{outline-offset:2px}
     </button>
   </div>
   <div class="drawer-bd">
-    <div class="kwrap" id="kwrap" data-note="kline-drawer">
+    <div class="kwrap" id="kwrap">
       <div class="klegend">
         <span class="li"><span class="sw" style="background:var(--accent)"></span>MA5</span>
         <span class="li"><span class="sw" style="background:var(--s2)"></span>MA10</span>
@@ -1951,7 +1895,6 @@ function renderMarketCal(){
 
   $('#calPrev').disabled    = (y===2026&&m===0);
   $('#calNextBtn').disabled  = (y===2026&&m===11);
-  renderNotes();
 }
 $('#calPrev').addEventListener('click',()=>{ state.cal.m--; if(state.cal.m<0){state.cal.m=11;state.cal.y--;} renderMarketCal(); });
 $('#calNextBtn').addEventListener('click',()=>{ state.cal.m++; if(state.cal.m>11){state.cal.m=0;state.cal.y++;} renderMarketCal(); });
@@ -2032,10 +1975,10 @@ function renderFeed(){
   else                 list=[...list].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
 
   $('#feedList').innerHTML = list.length? list.map(n=>`
-    <article class="news" data-id="${n.id}" data-note="feed-card">
+    <article class="news" data-id="${n.id}">
       <div class="time">${n.date?(n.hasExactTime===false?n.date.slice(5):n.time):'日期未提供'}${!n.date||n.hasExactTime===false?'':`<span class="d">${n.date.slice(5)}</span>`}</div>
       <div class="body">
-        <button class="fav ${state.favorites.has(n.id)?'on':''}" data-fav="${n.id}" data-note="feed-fav"
+        <button class="fav ${state.favorites.has(n.id)?'on':''}" data-fav="${n.id}"
           title="${state.favorites.has(n.id)?'取消收藏':'加入收藏'}">${state.favorites.has(n.id)?'★':'☆'}</button>
         <div class="meta">
           <span class="chip src">${n.source}</span>
@@ -2046,8 +1989,8 @@ function renderFeed(){
         <div class="tags">${n.tags.map(t=>`<span class="chip tag"># ${t}</span>`).join('')}</div>
         <div class="brief">${n.brief}</div>
         <div class="acts">
-          <span class="link" data-act="ana" data-note="feed-gotoana">${n.aiAnalysis?'查看智能分析 →':'查看摘要并开始 AI 分析 →'}</span>
-          ${safeUrl(n.url)?`<a class="ext" href="${safeUrl(n.url)}" target="_blank" rel="noopener" data-note="feed-srclink">原文链接 ↗</a>`:'<span class="ext muted">暂无原文链接</span>'}
+          <span class="link" data-act="ana">${n.aiAnalysis?'查看智能分析 →':'查看摘要并开始 AI 分析 →'}</span>
+          ${safeUrl(n.url)?`<a class="ext" href="${safeUrl(n.url)}" target="_blank" rel="noopener">原文链接 ↗</a>`:'<span class="ext muted">暂无原文链接</span>'}
           ${n.aiAnalysis?`<span class="muted" style="margin-left:auto;font-size:11.5px">已关联 ${n.chain.reduce((s,c)=>s+c.items.length,0)} 只标的</span>`:''}
         </div>
       </div>
@@ -2080,7 +2023,6 @@ function renderFeed(){
         <span class="rank ${i===0?'top':''}">${i+1}</span>
         <span class="t">${n.title}</span></div>`).join('');
   $$('#hotList .hotrow').forEach(el=>el.addEventListener('click',()=>gotoAnalysis(el.dataset.id)));
-  renderNotes();
 }
 $$('.seg[data-filter]').forEach(seg=>seg.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
@@ -2091,7 +2033,7 @@ $$('.select[data-filter]').forEach(sel=>sel.addEventListener('change',()=>{
   state.filters[sel.dataset.filter]=sel.value; renderFeed();
 }));
 $('#feedSearch').addEventListener('input',renderFeed);
-$('[data-note="feed-refresh"]').addEventListener('click',()=>loadLiveNews(true));
+$('#feedRefreshBtn').addEventListener('click',()=>loadLiveNews(true));
 
 /* ============================================================
    7. 新闻导入
@@ -2183,7 +2125,6 @@ function renderImports(){
   $('#impPending').textContent=pending.filter(r=>importTime(r.imported_at).slice(0,10)===TODAY).length;
   $$('[data-import-id]').forEach(button=>button.addEventListener('click',()=>openImportModal(button.dataset.importId)));
   $$('[data-import-delete]').forEach(button=>button.addEventListener('click',()=>deleteImportRecord(button.dataset.importDelete,button)));
-  renderNotes();
 }
 
 async function deleteImportRecord(id,button){
@@ -3075,101 +3016,6 @@ function renderKline(host,candles,dates=DATES,event=null){
 }
 
 /* ============================================================
-   10. 开发交接标注
-   编号顺序即清单顺序；界面角标按 data-note 键匹配
-   ============================================================ */
-const NOTES = [
-  // ── 快讯流 ──
-  {k:'feed-search', sc:'快讯流', el:'顶栏搜索框',
-   tx:'接入全文检索：标题、正文、标签、股票代码四个字段，需要中文分词。建议后端返回命中片段用于高亮。当前为纯静态输入框。'},
-  {k:'feed-refresh', sc:'快讯流', el:'手动刷新',
-   tx:'接入华尔街见闻快讯拉取（轮询或 WebSocket）。必须按快讯唯一 id 去重并记录 last_seen_ts，否则会重复入库。'},
-  {k:'feed-datepicker', sc:'快讯流', el:'日期筛选',
-   tx:'日期的可选/不可选必须由「当日是否有快讯」实时计算，不能写死。现有实现已经按数据推导，可直接复用这套逻辑。'},
-  {k:'feed-stars', sc:'快讯流', el:'信息重要度筛选（1–5 星）',
-   tx:'信息重要度由新鲜度、来源权威性、事件实质性、A股传导直接性、证据完整度和多来源确认六项可核验信号计算，不使用虚构点击量。'},
-  {k:'feed-tagfilter', sc:'快讯流', el:'标签下拉',
-   tx:'固定使用宏观级、行业级、公司级、混合级四个影响层级；分类根据事件实际影响范围判断，不按标题单个关键词机械匹配。'},
-  {k:'feed-favfilter', sc:'快讯流', el:'仅看收藏',
-   tx:'收藏状态需持久化（user_id + news_id），并支持多端同步。当前仅存在内存里，刷新即丢失。'},
-  {k:'feed-sort', sc:'快讯流', el:'排序',
-   tx:'需定义同星级下的次级排序规则（建议时间倒序）。「按信息重要度」是否跨日期排序需要产品确认。'},
-  {k:'feed-card', sc:'快讯流', el:'快讯卡片（整卡可点）',
-   tx:'点击整卡进入智能分析页。建议埋点：news_id、进入时间、入口来源（快讯流/收藏/高影响榜）。'},
-  {k:'feed-fav', sc:'快讯流', el:'收藏按钮 ☆',
-   tx:'与「仅看收藏」共用同一持久化接口。注意阻止事件冒泡，否则点收藏会连带触发卡片跳转。'},
-  {k:'feed-gotoana', sc:'快讯流', el:'查看智能分析 →',
-   tx:'调用推演接口，返回产业链结构（环节分层 + 标的 + 影响方向 + 方向置信度）。接口字段见本页「智能分析」部分。'},
-  {k:'feed-srclink', sc:'快讯流', el:'原文链接 ↗',
-   tx:'需保存快讯原始 URL。注意部分快讯本身没有外链，前端要降级为不可点状态，不要渲染成死链接。'},
-  {k:'feed-hot', sc:'快讯流', el:'信息重要度榜',
-   tx:'按信息重要度星级排序；重要度表示优先处理价值，不等于股价涨跌方向或收益概率。'},
-  {k:'feed-wordcloud', sc:'快讯流', el:'标签词云',
-   tx:'统计口径需产品确认：当前是「全库近 7 日」的示例分布；若要跟随筛选联动，需改为按当前筛选结果聚合。字号编码出现次数，颜色编码标签类别。'},
-
-  // ── 智能分析 ──
-  {k:'ana-chain', sc:'智能分析', el:'产业链传导路径',
-   tx:'推演接口返回事件根节点与分层行业节点，节点之间说明成本、价格、供需或政策传导机制。图中不放具体公司；标的通过 industry_id 关联对应行业。'},
-  {k:'ana-table', sc:'智能分析', el:'相关公司清单',
-   tx:'股票仅来自 iFinD 行业查询结果，影响方向继承所关联行业的经济传导。传导强度暂用高、中、低、待评估，不把模型主观判断伪装成精确星级。'},
-  {k:'ana-reanalyze', sc:'智能分析', el:'重新推演',
-   tx:'需支持强制重跑并绕过缓存。建议记录每次推演的耗时与模型版本，便于对比效果。'},
-
-  // ── 开市日历 ──
-  {k:'cal-data', sc:'开市日历', el:'交易日历数据',
-   tx:'需每年按国务院办公厅通知维护节假日。关键规则：调休上班的周末仍然休市（最容易写错的地方）。建议做成可配置的数据表而不是硬编码在代码里。'},
-  {k:'cal-next', sc:'开市日历', el:'下一交易日',
-   tx:'由交易日历推导计算，不要在代码里写死日期。当前实现为向后查找第一个交易日。'},
-
-  // ── 标的日K抽屉 ──
-  {k:'kline-drawer', sc:'标的日K抽屉', el:'日K行情数据',
-   tx:'已接入 iFinD 日频行情。以新闻发布时间建立事前截止点，只返回此前最近 60 个有效交易日，并将标的与行业基准、同花顺全A对照；新闻后的行情不得进入本页判断。'},
-];
-
-function renderNotesScreen(){
-  const groups=[];
-  NOTES.forEach((n,i)=>{
-    let g=groups.find(x=>x.sc===n.sc);
-    if(!g){ g={sc:n.sc, items:[]}; groups.push(g); }
-    g.items.push({...n, no:i+1});
-  });
-  $('#noteBody').innerHTML = groups.map(g=>`
-    <div class="card notecard">
-      <h3>${g.sc}<span class="cnt">${g.items.length} 项待补充</span></h3>
-      ${g.items.map(n=>`
-        <div class="noterow">
-          <span class="no">${n.no}</span>
-          <div><div class="el">${n.el}</div><div class="tx">${n.tx}</div></div>
-        </div>`).join('')}
-    </div>`).join('');
-  $('#navNoteN').textContent = NOTES.length;
-}
-
-/* 角标层：每次局部渲染后重新贴一遍；正在重绘的元素上旧角标已随 innerHTML 消失 */
-function renderNotes(){
-  $$('.nt').forEach(b=>b.remove());
-  if(!document.body.classList.contains('notes')) return;
-  NOTES.forEach((n,i)=>{
-    const el=document.querySelector(`[data-note="${n.k}"]`);
-    if(!el) return;
-    const b=document.createElement('span');
-    b.className='nt'; b.textContent=i+1;
-    b.title=`【${i+1}】${n.el}｜待补充：${n.tx}`;
-    el.appendChild(b);
-  });
-}
-function toggleNotes(force){
-  const on = force!==undefined ? force : !document.body.classList.contains('notes');
-  document.body.classList.toggle('notes', on);
-  $('#noteBtn').classList.toggle('on', on);
-  $('#noteBtn').textContent = on ? '✎ 开发标注 · 开' : '✎ 开发标注';
-  const t2=$('#noteToggle2'); if(t2) t2.textContent = on ? '隐藏界面标注' : '显示界面标注';
-  renderNotes();
-}
-$('#noteBtn').addEventListener('click',()=>toggleNotes());
-$('#noteToggle2').addEventListener('click',()=>toggleNotes());
-
-/* ============================================================
    12. 标签词云
    字号 = 出现次数（连续量级 → 单通道），颜色 = 标签类别（身份 → 分类色板）
    两个通道各司其职，不做"越大越深"的重复编码
@@ -3196,7 +3042,6 @@ function renderCloud(){
       + '</table>';
     $('#cloudLegend').style.display='none';
   }
-  renderNotes();
 }
 $('#cloudToggle').addEventListener('click',()=>{
   cloudMode = cloudMode==='cloud' ? 'table' : 'cloud';
@@ -3226,14 +3071,12 @@ syncTagOptions();
 renderFeed();
 loadImports();
 renderCloud();
-renderNotesScreen();
 syncFavUI();
 renderMarketBits();
 renderHolidayTable();
 renderMarketCal();
 openAnalysis('n1');
-toggleNotes(false);
-showScreen(['feed','analysis','import','calendar','notes'].includes(location.hash.slice(1))
+showScreen(['feed','analysis','import','calendar'].includes(location.hash.slice(1))
   ? location.hash.slice(1) : 'feed');
 loadLiveNews();
 </script>
