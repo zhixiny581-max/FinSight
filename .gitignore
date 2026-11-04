@@ -3,6 +3,10 @@
 .env.*
 !.env.example
 
+# 本地接口凭据：展示机与同学各自填写，只保留模板进仓库
+**/api-config.json
+!**/api-config.example.json
+
 # Python
 __pycache__/
 *.py[cod]

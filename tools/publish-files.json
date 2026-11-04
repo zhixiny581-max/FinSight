@@ -2,6 +2,15 @@
   ".env.example",
   ".gitignore",
   "README.md",
+  "deploy/show-v2/config_store.py",
+  "deploy/show-v2/diag_news.py",
+  "deploy/show-v2/popularity.py",
+  "deploy/show-v2/run_local.py",
+  "deploy/show-v2/setup_keys.py",
+  "deploy/show-v2/test_rank.py",
+  "deploy/show-v2/启动展示站.cmd",
+  "deploy/show-v2/测试人气榜.cmd",
+  "deploy/show-v2/设置密钥.cmd",
   "docs/presentation/new-analysis/candidate.json",
   "docs/presentation/new-analysis/new-analysis.html",
   "docs/presentation/new-analysis/new-analysis.png",
@@ -88,5 +97,9 @@
   "停止旧版.cmd",
   "启动新版.cmd",
   "启动旧版.cmd",
-  "打包上传GitHub.cmd"
+  "打包上传GitHub.cmd",
+  "deploy/show-v2/api-config.example.json",
+  "deploy/show-v2/open_config.py",
+  "deploy/show-v2/打开配置文件.cmd",
+  "docs/接口配置说明.md"
 ]

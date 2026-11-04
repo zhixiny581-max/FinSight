@@ -12,12 +12,21 @@ import time
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urljoin, urlsplit
+from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 
-import base
-from feedback_analysis import analyze, finalize_candidates
-from market_adapter import MarketAdapter
-from news_provider import IFindClient, NewsProvider, normalize_news_response
+import config_store
+
+# 先把 api-config.json / ~/.finsight/config.json 里的凭据补进环境变量，
+# 必须在 import base 之前执行：base 在模块顶层就读取了 DEEPSEEK_MODEL 等变量，
+# 晚一步注入会导致配置文件里的模型名、接口地址不生效。
+# 已存在的系统环境变量优先，不会被文件覆盖。
+CONFIG_APPLIED = config_store.load_into_env()
+
+import base  # noqa: E402 - 必须晚于凭据注入
+from feedback_analysis import analyze, finalize_candidates  # noqa: E402
+from market_adapter import MarketAdapter  # noqa: E402
+from news_provider import IFindClient, NewsProvider, normalize_news_response, recent_dates  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 PORT = int(os.getenv("PORT", "8000"))
@@ -173,6 +182,107 @@ def availability():
     }
 
 
+PROBE_TIMEOUT = 12
+
+IFIND_MESSAGES = {
+    "IFIND_NOT_CONFIGURED": "未配置授权串",
+    "IFIND_HTTP_401": "授权无效或已过期（401）",
+    "IFIND_HTTP_403": "无访问权限（403）",
+    "IFIND_HTTP_429": "调用过于频繁（429）",
+    "IFIND_TIMEOUT": "连接超时，检查网络或代理",
+    "IFIND_INVALID_RESPONSE": "返回格式异常，接口可能改版",
+    "IFIND_PROVIDER_ERROR": "接口返回错误，稍后重试",
+    "IFIND_TOOL_NOT_ALLOWED": "工具名不被允许",
+}
+
+
+def _probe(ok, started, detail=""):
+    return {"ok": bool(ok), "ms": int((time.monotonic() - started) * 1000), "detail": detail}
+
+
+def probe_ifind():
+    started = time.monotonic()
+    if not IFIND_AUTH:
+        return _probe(False, started, "未配置授权串")
+    day = recent_dates()[0]
+    try:
+        raw = IFIND.call("news", "search_news", {
+            "query": "市场", "time_start": day, "time_end": day, "size": 1,
+        }, timeout=PROBE_TIMEOUT)
+        items = normalize_news_response(raw)
+        return _probe(True, started, "新闻检索正常，返回 %d 条" % len(items))
+    except Exception as exc:  # noqa: BLE001
+        code = str(exc) if re.fullmatch(r"IFIND_[A-Z0-9_]+", str(exc)) else "IFIND_PROVIDER_ERROR"
+        return _probe(False, started, IFIND_MESSAGES.get(code, code))
+
+
+def probe_deepseek():
+    started = time.monotonic()
+    key = base.deepseek_key()
+    if not key:
+        return _probe(False, started, "未配置 API Key")
+    payload = {"model": base.DEEPSEEK_MODEL, "thinking": {"type": "disabled"},
+               "messages": [{"role": "user", "content": "ping"}],
+               "max_tokens": 1, "stream": False}
+    request = Request(
+        base.DEEPSEEK_BASE_URL + "/chat/completions",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
+        method="POST",
+    )
+    try:
+        with build_opener(ProxyHandler({})).open(request, timeout=PROBE_TIMEOUT) as response:
+            response.read(200_000)
+        return _probe(True, started, "模型 %s 可用" % base.DEEPSEEK_MODEL)
+    except HTTPError as error:
+        messages = {401: "Key 无效（401）", 402: "余额不足（402）", 403: "无权限（403）",
+                    429: "调用过于频繁（429）", 404: "模型不存在（404）"}
+        return _probe(False, started, messages.get(error.code, "HTTP %d" % error.code))
+    except (URLError, socket.timeout, OSError) as error:
+        return _probe(False, started, "网络不可达：%s" % (type(error).__name__,))
+
+
+def probe_tavily():
+    started = time.monotonic()
+    key = (os.getenv("TAVILY_API_KEY") or "").strip()
+    if not key:
+        return _probe(False, started, "未配置 API Key（可选）")
+    request = Request(
+        "https://api.tavily.com/search", method="POST",
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
+        data=json.dumps({"query": "A股 市场", "max_results": 1, "include_raw_content": False}).encode("utf-8"),
+    )
+    try:
+        with build_opener(ProxyHandler({})).open(request, timeout=PROBE_TIMEOUT) as response:
+            body = json.loads(response.read(500_000).decode("utf-8"))
+        count = len(body.get("results") or []) if isinstance(body, dict) else 0
+        return _probe(True, started, "检索正常，返回 %d 条" % count)
+    except HTTPError as error:
+        return _probe(False, started, {401: "Key 无效（401）", 403: "无权限（403）",
+                                       429: "调用过于频繁（429）"}.get(error.code, "HTTP %d" % error.code))
+    except (URLError, socket.timeout, OSError, ValueError) as error:
+        return _probe(False, started, "网络不可达：%s" % (type(error).__name__,))
+
+
+def probe_eastmoney():
+    started = time.monotonic()
+    try:
+        import popularity
+        data = popularity.fetch_rank(1)
+        items = data.get("items") or []
+        return _probe(True, started, "免授权接口正常，返回 %d 条" % len(items))
+    except Exception as error:  # noqa: BLE001
+        code = getattr(error, "code", type(error).__name__)
+        messages = {"RANK_TIMEOUT": "响应超时", "RANK_UNREACHABLE": "网络不可达",
+                    "RANK_HTTP": "HTTP 异常，可能被限流", "RANK_PARSE": "返回无法解析，接口可能改版",
+                    "RANK_REJECTED": "接口拒绝请求", "RANK_EMPTY": "返回为空"}
+        return _probe(False, started, messages.get(code, str(code)))
+
+
+PROBES = {"ifind": probe_ifind, "deepseek": probe_deepseek,
+          "tavily": probe_tavily, "eastmoney": probe_eastmoney}
+
+
 def evidence_tool(name, args, timeout):
     if not availability().get(name):
         raise ValueError("TOOL_UNAVAILABLE")
@@ -226,12 +336,17 @@ class Handler(base.Handler):
             return self.send_json(403, {"ok": False, "error": "请从本站页面操作"})
         if method == "POST" and self.headers.get_content_type() != "application/json":
             return self.send_json(415, {"ok": False, "error": "请求须使用 JSON 格式"})
-        costly = path in {"/api/news", "/api/analyze", "/api/market-kline", "/api/stock-kline", "/api/related-stocks"} or (
+        costly = path in {"/api/news", "/api/analyze", "/api/market-kline", "/api/stock-kline",
+                          "/api/related-stocks", "/api/health/probe"} or (
             method == "POST" and path.startswith("/api/imports"))
         if costly and not UPSTREAM_SLOTS.acquire(blocking=False):
             return self.send_json(429, {"ok": False, "error": "请求较多，请稍后重试"})
         try:
             query = parse_qs(urlsplit(self.path).query)
+            if method == "GET" and path == "/api/health":
+                return self.api_health()
+            if method == "POST" and path == "/api/health/probe":
+                return self.api_health_probe()
             if method == "GET" and path == "/api/market-kline":
                 return self.send_json(*MARKET.market_kline(query))
             if method == "GET" and path == "/api/related-stocks":
@@ -245,6 +360,38 @@ class Handler(base.Handler):
         finally:
             if costly:
                 UPSTREAM_SLOTS.release()
+
+    def api_health(self):
+        """接口配置状态：只返回掩码与来源，不含完整密钥。"""
+        self.send_json(200, {
+            "ok": True,
+            "providers": config_store.status(),
+            "server": {
+                "runtime": "python", "commit": BASELINE,
+                "model": base.DEEPSEEK_MODEL,
+                "baseUrl": base.DEEPSEEK_BASE_URL,
+                "configPath": config_store.config_path(),
+                "configPaths": config_store.paths(),
+                "configApplied": CONFIG_APPLIED,
+                "retrieval": availability(),
+            },
+        })
+
+    def api_health_probe(self):
+        """对单个上游做一次轻量真实调用，返回通过与否和耗时。"""
+        try:
+            payload = self.read_json_body()
+        except base.ApiError:
+            return self.send_json(400, {"ok": False, "error": "请求格式不正确"})
+        target = str((payload or {}).get("target") or "").strip()
+        handler = PROBES.get(target)
+        if handler is None:
+            return self.send_json(400, {"ok": False, "error": "未知的检测目标"})
+        try:
+            result = handler()
+        except Exception as exc:  # noqa: BLE001
+            result = {"ok": False, "ms": 0, "detail": type(exc).__name__}
+        self.send_json(200, {"ok": True, "target": target, "result": result})
 
     def api_status(self):
         self.send_json(200, {
@@ -362,6 +509,12 @@ class LimitedServer(ThreadingHTTPServer):
 
 if __name__ == "__main__":
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _paths = config_store.paths()
+    _labels = [config_store.FIELDS[key]["label"] for key in CONFIG_APPLIED]
+    print(f"FinSight feedback Python {BASELINE}")
+    print("  接口配置：%s" % ("、".join(_labels) if _labels else "未读取到凭据（仅演示数据）"))
+    print("  项目配置：%s（%s）" % (_paths["project"], "已存在" if _paths["projectExists"] else "未创建，可双击「打开配置文件.cmd」"))
+    print("  用户配置：%s（%s）" % (_paths["user"], "已存在" if _paths["userExists"] else "未创建"))
     server = LimitedServer(("0.0.0.0", PORT), Handler)
     print(f"FinSight feedback Python {BASELINE} listening on {PORT}", flush=True)
     server.serve_forever()

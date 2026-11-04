@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<script>
+(function(){try{
+  var saved=localStorage.getItem('fs.theme');
+  var prefers=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme=(saved==='dark'||saved==='light')?saved:(prefers?'dark':'light');
+}catch(e){}})();
+</script>
 <title>财讯智析 FinSight Core — 财经新闻分析平台</title>
 <style>
 /* ============================================================
@@ -57,8 +65,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .topbar{position:fixed;top:0;left:0;right:0;z-index:60;height:58px;display:flex;align-items:center;gap:18px;
   padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 1px 0 var(--border)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:.2px;white-space:nowrap}
-.brand .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,var(--accent),var(--s3));
-  display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700}
 .brand .sub{font-size:11px;color:var(--ink-3);font-weight:400;letter-spacing:0}
 .searchbox{flex:1;max-width:440px;position:relative}
 .searchbox input{width:100%;height:36px;padding:0 12px 0 34px;border-radius:var(--r-s);
@@ -73,8 +79,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r-s);
   background:var(--surface-2);border:1px solid var(--border);cursor:pointer}
 .icon-btn:hover{border-color:var(--border-2)}
-.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
-  display:grid;place-items:center;font-size:12px;font-weight:650}
 
 /* ---------- 骨架 ---------- */
 .shell{display:grid;grid-template-columns:212px minmax(0,1fr);padding-top:58px}
@@ -147,6 +151,23 @@ h1{font-size:21px;font-weight:650;letter-spacing:-.2px}
   border:1px solid var(--border);cursor:pointer;font-size:12.5px}
 .selwrap{position:relative;display:inline-flex}
 .stock-filterbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+
+/* ---------- 筛选行内的紧凑统计 ---------- */
+.fb-stats{display:flex;align-items:center;gap:14px;margin-left:auto;padding-left:14px;
+  border-left:1px solid var(--border);white-space:nowrap}
+.fb-stat{font-size:12px;color:var(--ink-3);display:inline-flex;align-items:baseline;gap:4px}
+.fb-stat b{font-size:14px;color:var(--ink);font-weight:650;letter-spacing:-.2px}
+@media(max-width:1080px){
+  .fb-stats{margin-left:0;padding-left:0;border-left:0;width:100%;justify-content:flex-start;
+    padding-top:6px;border-top:1px solid var(--border)}
+}
+
+/* ---------- 右栏：整月开市日历 ---------- */
+.rail-cal{padding:14px}
+.rail-cal .cal-hd{margin-bottom:6px}
+.rail-cal .cal-d{height:32px;font-size:12px}
+.rail-cal .cal-wd{font-size:10px;padding:2px 0}
+.rail-cal-note{font-size:10.5px;line-height:1.45;margin-top:8px;padding-top:7px;border-top:1px solid var(--border)}
 .stock-filter-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .stock-filter-controls label{font-size:11.5px;color:var(--ink-3)}
 .stock-filter-controls .select{min-width:180px;max-width:min(320px,70vw)}
@@ -230,7 +251,6 @@ h1{font-size:21px;font-weight:650;letter-spacing:-.2px}
 
 /* ---------- 右栏 ---------- */
 .rail-col{display:flex;flex-direction:column;gap:14px;position:sticky;top:76px}
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:var(--r-m);overflow:hidden}
 .stat{background:var(--surface);padding:12px 14px}
 .stat .k{font-size:11.5px;color:var(--ink-3);margin-bottom:4px}
 .stat .v{font-size:24px;font-weight:640;letter-spacing:-.5px;line-height:1.15}
@@ -242,13 +262,35 @@ h1{font-size:21px;font-weight:650;letter-spacing:-.2px}
 .hotrow:hover{background:var(--surface-2)}
 .hotrow .rank{font-size:12px;color:var(--ink-3);width:14px;flex:none;font-variant-numeric:tabular-nums;padding-top:1px}
 .hotrow .rank.top{color:var(--up);font-weight:700}
+
+/* ---------- 右栏：东方财富人气榜 ---------- */
+.rank-refresh{margin-left:auto;font-weight:400}
+.rank-refresh[disabled]{opacity:.5;cursor:not-allowed}
+.rank-meta{font-size:10.5px;color:var(--ink-3);padding:0 14px 6px;line-height:1.45}
+.rank-meta.err{color:var(--down)}
+/* 20 条全部展开，不设内部滚动；整卡随页面一起滚 */
+.ranklist{display:flex;flex-direction:column}
+.rankrow{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:center;
+  padding:6px 14px;border-top:1px solid var(--border);text-align:left}
+.rankrow:first-child{border-top:0}
+.rankrow .rk{font-size:11px;color:var(--ink-3);text-align:center;font-variant-numeric:tabular-nums}
+.rankrow .rk.top{color:var(--up);font-weight:700}
+.rankrow .nm{font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rankrow .nm .cd{font-size:10px;color:var(--ink-3);margin-left:5px;font-variant-numeric:tabular-nums}
+.rankrow .px{text-align:right;font-variant-numeric:tabular-nums;line-height:1.25}
+.rankrow .px .p{font-size:12px;font-weight:600}
+.rankrow .px .ch{font-size:10.5px;color:var(--ink-3)}
+.rankrow .px .ch.up{color:var(--up)}
+.rankrow .px .ch.down{color:var(--down)}
+.rank-src{display:flex;align-items:center;gap:4px;padding:8px 14px 11px;margin-top:4px;
+  border-top:1px solid var(--border);font-size:11px;color:var(--accent-ink);font-weight:600;
+  text-decoration:none;cursor:pointer}
+.rank-src:hover{text-decoration:underline}
 .hotrow .t{font-size:12.5px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.weekstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
-.weekstrip .d{font-size:10.5px;color:var(--ink-3);padding-bottom:2px}
-.weekstrip .c{height:30px;border-radius:5px;display:grid;place-items:center;font-size:11.5px;
-  background:var(--surface-2);color:var(--ink-2);font-variant-numeric:tabular-nums}
-.weekstrip .c.open{background:var(--accent-soft);color:var(--accent-ink);font-weight:650}
-.weekstrip .c.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+/* 月历里的选中日：需要压过 .m-open 的底色 */
+.cal-d.sel,.cal-d.m-open.sel,.cal-d.m-holiday.sel,.cal-d.m-weekend.sel,.cal-d.m-makeup.sel{
+  background:var(--accent);color:var(--on-accent);font-weight:650;
+  box-shadow:inset 0 0 0 2px var(--accent-ink)}
 
 /* ---------- 导入页 ---------- */
 .imp-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
@@ -268,16 +310,14 @@ h1{font-size:21px;font-weight:650;letter-spacing:-.2px}
 .tabs button{height:32px;padding:0 12px;border:0;background:transparent;cursor:pointer;font-size:13px;
   color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px}
 .tabs button.on{color:var(--accent-ink);border-bottom-color:var(--accent);font-weight:650}
-.dropzone{border:1.5px dashed var(--border-2);border-radius:var(--r-m);padding:26px;text-align:center;
-  color:var(--ink-3);font-size:12.5px;cursor:pointer}
-.dropzone:hover{border-color:var(--accent);color:var(--ink-2)}
+/* 只有一个 tab 时不具备切换语义，不显示可点击光标 */
+.tabs button:only-child{cursor:default}
 .step{display:flex;gap:11px;padding:11px 0;border-top:1px solid var(--border)}
 .step:first-of-type{border-top:0}
 .step .n{width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
   font-size:11px;font-weight:700;display:grid;place-items:center;flex:none;margin-top:1px}
 .step .t{font-size:12.5px;color:var(--ink-2);line-height:1.6}
 .step .t b{color:var(--ink);font-weight:600;display:block;margin-bottom:1px}
-.dropzone.drag{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
 .modal-scrim{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.46);display:none;
   align-items:center;justify-content:center;padding:24px}
 .modal-scrim.on{display:flex}
@@ -468,8 +508,11 @@ table.tbl th{text-align:left;font-weight:600;color:var(--ink-3);font-size:11.5px
   border-bottom:1px solid var(--border);white-space:nowrap}
 table.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
 table.tbl tr:last-child td{border-bottom:0}
+/* 只有数据行可选；空状态行（.empty-row）不显示可点击光标 */
 table.tbl tbody tr{cursor:pointer}
 table.tbl tbody tr:hover{background:var(--surface-2)}
+table.tbl tbody tr.empty-row{cursor:default}
+table.tbl tbody tr.empty-row:hover{background:transparent}
 table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---------- 滚动容器 ----------
@@ -503,6 +546,12 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
 .feed-col  {position:relative;min-height:0}
 .feedlist  {position:static;max-height:none;overflow:visible}
 .feedlist.scroll {overflow-y:visible;overflow-x:visible}
+/* ---------- 快讯流分页 ---------- */
+.feed-pager{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+  margin-top:16px;padding:12px 0 2px;border-top:1px solid var(--border)}
+.feed-pager[hidden]{display:none}
+.feed-pager .pg-info{font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.feed-pager .pg-info b{color:var(--ink);font-weight:650}
 /* 右栏不设高度上限、不加 overflow —— 它的自然高度就是这一行的高度 */
 .hotlist  {max-height:268px}                           /* 高影响榜 */
 .src-doc  {max-height:calc(100vh - 100px)}             /* 源快讯，长文自己滚，不撑破吸顶 */
@@ -587,15 +636,271 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
 .footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-3);
   display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 
-/* ---------- 标签词云 ---------- */
-.cloud{display:flex;flex-wrap:wrap;gap:1px 11px;align-items:baseline;padding:6px 0 2px}
-.cw{font-weight:650;letter-spacing:-.2px;line-height:1.3;cursor:default;transition:opacity .15s}
-.cw:hover{opacity:.65}
-.cloudtbl{width:100%;border-collapse:collapse;font-size:12px}
-.cloudtbl td{padding:5px 0;border-bottom:1px solid var(--border)}
-.cloudtbl tr:last-child td{border-bottom:0}
-.cloudtbl .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);font-weight:600}
-.cloudtbl .cat{font-size:11px;color:var(--ink-3)}
+
+/* ============================================================
+   UI 优化补丁 v1 · 2026-11-04
+   追加式区块：不改写上方任何既有规则，便于 review 与整体回退。
+   覆盖：主题一致性、键盘可达性、超宽屏行长、窄屏骨架、动效偏好。
+   同一补丁同步用于 deploy/show-v2/index.html 与
+   versions/feedback/modules/news/prototype/index-core.html。
+   ============================================================ */
+:root{--content-max:1680px;--ui-halo:rgba(42,120,214,.10)}
+:root[data-theme="dark"]{--ui-halo:rgba(57,135,229,.20)}
+
+/* 1) 主题一致性。原 .validation-status 用 #fff4d8 / #8a5b00 硬编码，
+      深色模式下仍是亮黄底深字；卡片悬停光晕写死 rgba(35,116,225,..)，
+      与当前主题 --accent 不同步。统一改用设计令牌。 */
+.validation-status{background:var(--warn-soft);color:var(--warn)}
+.direct-impact-card:hover,.direct-impact-card.open{box-shadow:0 0 0 2px var(--ui-halo)}
+.macro-node-card.open,.macro-node-card.linked,.map-node.linked{box-shadow:0 0 0 2px var(--ui-halo)}
+
+/* 2) 键盘可达性。原页面只有 input/textarea/select 的 :focus 反馈，
+      按钮、链接、可点击卡片与导航都没有可见焦点环。!important 用于
+      压过上方 .searchbox input{outline:none} 等更高优先级声明。 */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{
+  outline:2px solid var(--accent)!important;outline-offset:2px}
+.nav-item{width:100%;text-align:left;background:transparent;appearance:none}
+.nav-item:focus-visible{outline-offset:-2px}
+
+/* 3) 超宽屏行长上限，避免 2K/4K 屏正文被拉得难以扫读。 */
+main{max-width:var(--content-max);width:100%;justify-self:center}
+
+/* 4) 窄屏骨架。顶栏始终单行，因此 .shell 的 58px 上偏移无需调整；
+      关键在于给弹性项 min-width:0，否则搜索框拒绝收缩会横向溢出。
+      侧栏改横向标签条且不用 sticky，避免吸顶后遮挡正文。 */
+@media(max-width:1080px){
+  .mkt-tag{display:none}
+  .topbar{gap:12px;padding:0 14px}
+  .searchbox{min-width:0}
+}
+@media(max-width:820px){
+  .topbar{gap:9px;padding:0 12px}
+  /* 顶栏里 .spacer 与 .searchbox 同为 flex:1，窄屏会平分剩余宽度，
+     把搜索框压得过窄；隐藏 spacer 后搜索框独占剩余空间。 */
+  .topbar .spacer{display:none}
+  .brand .sub{display:none}
+  .brand{font-size:13px}
+  .searchbox{max-width:none}
+  .demo-tag{font-size:11px;padding:0 8px}
+  main{padding:18px 18px 64px}
+}
+@media(max-width:760px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .sidebar{position:static;height:auto;flex-direction:row;align-items:center;gap:2px;
+    overflow-x:auto;padding:6px 10px;border-right:0;border-bottom:1px solid var(--border)}
+  .sidebar .nav-label,.sidebar .src-panel{display:none}
+  .nav-item{flex:none;width:auto;white-space:nowrap;padding:7px 10px}
+  .nav-item .badge{margin-left:4px}
+  .rail-col,.src-doc{position:static}
+  main{padding:16px 14px 60px}
+  .icon-btn{flex:none}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .page-head h1{font-size:19px}
+}
+@media(max-width:520px){
+  .demo-tag{max-width:104px;overflow:hidden}
+  .searchbox svg{display:none}
+  .searchbox input{padding-left:10px}
+}
+
+/* 5) 系统级减少动效偏好：抽屉、弹层、卡片过渡统一收敛。 */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* 6) 展示站专属：此前已移除「智」字标与 SD 头像（去掉个人/开发者痕迹），
+      这里只补一个中性品牌竖条作为视觉锚，不恢复任何个人标识。 */
+.brand{padding-left:11px;position:relative}
+.brand::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:20px;border-radius:2px;background:var(--accent)}
+
+
+/* ============================================================
+   UI 优化层（2026-11-05）
+   覆盖式规则，置于样式表末尾，靠顺序覆盖上方基础样式。
+   ============================================================ */
+
+/* ---- 1. 浅色三级文字 3.50:1 → 4.68:1（WCAG AA 正文 4.5） ---- */
+:root[data-theme="light"]{--ink-3:#74726D}
+:root[data-theme="dark"]{--ink-3:#898781}
+
+/* ---- 2. 快讯卡片：标题更立、摘要更像引文、留白更松 ---- */
+.feedlist{gap:12px}
+.news{padding:16px 18px;border-radius:12px}
+.news h3{font-size:15px;font-weight:650;line-height:1.45;
+  letter-spacing:-.1px;margin-bottom:8px}
+.news .brief{padding:8px 12px;line-height:1.6;
+  border-left:3px solid color-mix(in srgb,var(--accent) 60%,transparent);
+  border-radius:0 6px 6px 0}
+.news .time{font-size:13px}
+.news .time .d{font-size:11px;opacity:1}
+@media(prefers-reduced-motion:no-preference){
+  .news{transition:border-color .16s,background .16s,transform .16s,box-shadow .16s}
+  .news:hover{transform:translateY(-1px);box-shadow:0 2px 10px rgba(11,11,11,.07)}
+}
+
+/* ---- 3. 元信息去重：隐藏派生徽章，4–5 星用暖色承重 ---- */
+.chip.hot{display:none}
+.stars i:nth-child(4):not(.off),
+.stars i:nth-child(5):not(.off){color:var(--warn)}
+
+/* ---- 4. 点击目标 ≥32px ---- */
+.fav{top:10px;right:10px;width:32px;height:32px;font-size:16px}
+.news .acts .ext{display:inline-flex;align-items:center;min-height:32px;padding:0 2px}
+.select{height:32px}
+.seg button{height:28px}
+.seg button .st{font-size:12px}
+
+/* ---- 5. 顶栏：日期降为文本，只留数据状态一个胶囊 ---- */
+.topbar{padding:0 22px}
+.mkt-tag{background:transparent;border-color:transparent;
+  color:var(--ink-2);padding:0 2px;height:auto;font-weight:600}
+.demo-tag{font-weight:650}
+
+/* ---- 6. 小字下限 12px ---- */
+.chip{font-size:12px;height:23px}
+.stars .num{font-size:11.5px}
+.cal-wd{font-size:11px;font-weight:600}
+table.tbl th{font-size:12px}
+.rail-cal-note{font-size:11px}
+
+/* ---- 7. 开市日历页：格子限宽，不再被拉成宽条 ---- */
+#calGrid{max-width:640px;margin:0 auto}
+#calGrid .cal-d{height:36px}
+
+/* ---- 8. 统计卡：数字等宽，标签加重 ---- */
+.tiles{gap:14px}
+.tile .v{font-variant-numeric:tabular-nums}
+.tile .k{font-weight:600}
+
+/* ---- 9. 导入页表格：按内容分配列宽，标题列不再被压扁 ---- */
+table.tbl{table-layout:fixed}
+table.tbl th:nth-child(1){width:34%}
+table.tbl th:nth-child(2){width:20%}
+table.tbl th:nth-child(3){width:11%}
+table.tbl th:nth-child(4){width:13%}
+table.tbl th:nth-child(5){width:8%}
+table.tbl th:nth-child(6){width:8%}
+table.tbl th:nth-child(7){width:6%}
+
+/* ---- 10. 导入页只有一个 tab 时，去掉可切换的下划线暗示 ---- */
+#impTabs button:only-child{border-bottom-color:transparent!important;
+  font-weight:600;color:var(--ink-2);cursor:default}
+
+/* ---- 11. 分析页：左卡与右列等高，消除左下空洞 ---- */
+.ana-grid{align-items:stretch}
+.src-doc{align-self:stretch}
+
+/* ---- 12. 深色：开市日与周末拉开区分 ---- */
+html[data-theme="dark"] .cal-d.m-open{
+  background:color-mix(in srgb,var(--accent) 24%,transparent)}
+html[data-theme="dark"] .cal-d.m-weekend{background:var(--surface-3);color:var(--ink-3)}
+
+/* ---- 13. 窄屏：右栏置顶横排，筛选条不再膨胀 ---- */
+@media(max-width:1240px){
+  .feed-grid>.rail-col{order:-1;display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px;position:static;align-items:start}
+  .rail-cal .cal-legend{display:none}
+  .rail-cal .cal-d{height:28px;font-size:11px}
+  .ranklist .rankrow:nth-child(n+7){display:none}
+  .fb-stats{width:auto;margin-left:auto;padding-left:12px;
+    border-left:1px solid var(--border);gap:10px;justify-content:flex-end}
+}
+
+/* ---- 14. 用色纪律：灰阶再分配（ink-3 从 47% 降到辅助位） ---- */
+.chip.tag{color:var(--ink-2);border-color:var(--border-2)}
+.news .time .d{color:var(--ink-2)}
+.rank-meta{color:var(--ink-2)}
+table.tbl th{color:var(--ink-2)}
+.cal-wd{color:var(--ink-2)}
+.feed-legend{color:var(--ink-2)}
+
+/* ---- 15. 用色纪律：分类色与语义色解耦 ----
+   原 --s1 与 --accent 完全同值（#2a78d6），且 --s2 橙贴近"涨"、--s3 绿贴近"跌"。
+   改为 蓝 / 紫 / 青 三色相，与 红涨 / 绿跌 / 黄警告 彻底分离。 */
+:root[data-theme="light"]{--s1:#4f93e3;--s2:#7b5cd6;--s3:#1f9c9c}
+:root[data-theme="dark"]{--s1:#5fa0e8;--s2:#9b82e6;--s3:#35b8b8}
+
+/* ---- 16. 装饰：卡片左边条改为品牌刻度，hover 点亮 ---- */
+.news{border-left:3px solid color-mix(in srgb,var(--accent) 18%,transparent)}
+.news:hover{border-left-color:color-mix(in srgb,var(--accent) 62%,transparent)}
+
+/* ---- 17. 装饰：左栏竖向时间轴，最新一条实心点 ---- */
+.news .time{position:relative;padding-left:15px}
+.news .time::before{content:"";position:absolute;left:3.5px;top:5px;bottom:-18px;
+  width:1px;background:var(--border-2)}
+.feedlist .news:last-child .time::before{bottom:auto;height:15px}
+.news .time::after{content:"";position:absolute;left:-0.5px;top:2px;width:9px;height:9px;
+  border-radius:50%;background:var(--surface);
+  border:1.5px solid color-mix(in srgb,var(--accent) 55%,transparent)}
+.feedlist .news:first-child .time::after{background:var(--accent);border-color:var(--accent)}
+
+/* ---- 18. 装饰：标题起点色块，与卡片边条呼应 ---- */
+.news h3{position:relative;padding-left:11px}
+/* 标题为给色块让位加了左内距，其余同级元素同步缩进，保持左边缘一条线 */
+.news .tags,
+.news .brief,
+.news .acts{margin-left:11px}
+.news h3::before{content:"";position:absolute;left:0;top:.3em;width:3px;height:.92em;
+  border-radius:1.5px;background:color-mix(in srgb,var(--accent) 55%,transparent)}
+
+/* ---- 19. 装饰：页头竖条，与顶栏品牌标呼应 ---- */
+.page-head h1{position:relative;padding-left:13px}
+.page-head h1::before{content:"";position:absolute;left:0;top:.16em;bottom:.16em;
+  width:3px;border-radius:2px;background:var(--accent)}
+
+/* ---- 20. 装饰：区块标题前圆点，替代只有右侧延伸线 ---- */
+.sec-title::before{content:"";width:4px;height:4px;border-radius:50%;flex:none;
+  background:color-mix(in srgb,var(--accent) 50%,transparent)}
+
+/* ---- 21. 接口设置屏 ---- */
+.api-note{padding:12px 16px;margin-bottom:12px;font-size:12.5px;color:var(--ink-2);
+  border-left:3px solid color-mix(in srgb,var(--accent) 55%,transparent);background:var(--surface)}
+.api-card{padding:14px 16px;margin-bottom:10px}
+.api-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.api-name{font-size:13.5px;font-weight:650}
+.api-key{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;
+  padding:2px 8px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border)}
+.api-badge{margin-left:auto;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;
+  white-space:nowrap;border:1px solid transparent}
+/* 徽章只表达"是否配置"这一维度，用中性色，避免与下方可用性结论撞色相 */
+.api-badge.ok{background:var(--surface-2);color:var(--ink-2);border-color:var(--border)}
+.api-badge.bad{background:var(--up-soft);color:var(--up)}
+.api-badge.none{background:transparent;color:var(--ink-3);border-style:dashed;border-color:var(--border-2)}
+.api-badge.wait{background:transparent;color:var(--ink-3);border-style:dashed;border-color:var(--border-2)}
+.api-result{margin-top:8px;font-size:12px;color:var(--ink-2);line-height:1.55;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.api-result .ms{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.api-result.bad{color:var(--up)}
+.api-test{flex:none}
+/* 来源标签：告诉使用者这个值是从哪个文件读到的 */
+.api-src{font-size:11px;color:var(--ink-3);padding:1px 6px;border-radius:4px;
+  border:1px solid var(--border-2);white-space:nowrap}
+.api-foot{padding:16px 18px}
+.api-steps{margin:0;padding-left:18px;font-size:12.5px;color:var(--ink-2);line-height:1.9}
+.api-steps code{font-family:ui-monospace,Consolas,monospace;font-size:12px;
+  padding:1px 6px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border)}
+.api-foot-note{margin-top:10px;font-size:11.5px;line-height:1.5}
+/* 两级配置文件的实际路径与存在状态 */
+.api-paths{margin:12px 0 0;padding:0;list-style:none;font-size:12px;color:var(--ink-2);line-height:1.95}
+.api-paths li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.api-paths code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;
+  padding:1px 6px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);
+  word-break:break-all}
+.api-paths .flag{font-size:10.5px;padding:0 5px;border-radius:3px;
+  border:1px solid var(--border-2);color:var(--ink-3);white-space:nowrap}
+.api-paths .off code{color:var(--ink-3)}
+.src-panel[role="button"]{cursor:pointer;border-radius:var(--r-s)}
+.src-panel[role="button"]:hover{background:var(--surface-2)}
+.src-panel[role="button"]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---- 22. 装饰：滚动条全站统一细线 ---- */
+.scroll,body{scrollbar-width:thin;
+  scrollbar-color:color-mix(in srgb,var(--ink-3) 65%,transparent) transparent}
+
+/* ---- 15. 人气榜元信息单行，避免尾部折成孤字 ---- */
+.rank-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 </style>
 </head>
@@ -604,7 +909,6 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
 <!-- ================= 顶栏 ================= -->
 <header class="topbar">
   <div class="brand">
-    <div class="mark">智</div>
     <div>财讯智析 FinSight<div class="sub">财经新闻 · 影响推演工作台</div></div>
   </div>
   <div class="searchbox">
@@ -615,23 +919,23 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
   <div class="spacer"></div>
   <span class="mkt-tag" id="mktTag">—</span>
   <span class="demo-tag" id="dataModeTag">● 正在连接真实数据…</span>
-  <button class="icon-btn" id="themeBtn" title="切换深浅色">
+  <button class="icon-btn" id="themeBtn" title="切换深浅色" aria-label="切换深浅色">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 3a9 9 0 109 9 7 7 0 01-9-9z"/></svg>
   </button>
-  <div class="avatar">SD</div>
 </header>
 
 <div class="shell">
   <!-- ================= 侧栏 ================= -->
   <nav class="sidebar">
     <div class="nav-label">工作流</div>
-    <div class="nav-item active" data-screen="feed"><span class="ico">◧</span>快讯流<span class="badge" id="navCount">6</span></div>
-    <div class="nav-item" data-screen="analysis"><span class="ico">◈</span>智能分析</div>
-    <div class="nav-item" data-screen="import"><span class="ico">⊕</span>新闻导入<span class="badge" id="navImp">1</span></div>
+    <button type="button" class="nav-item active" data-screen="feed"><span class="ico">◧</span>快讯流<span class="badge" id="navCount">6</span></button>
+    <button type="button" class="nav-item" data-screen="analysis"><span class="ico">◈</span>智能分析</button>
+    <button type="button" class="nav-item" data-screen="import"><span class="ico">⊕</span>新闻导入<span class="badge" id="navImp">1</span></button>
     <div class="nav-label">工具</div>
-    <div class="nav-item" data-screen="calendar"><span class="ico">▦</span>开市日历</div>
-    <div class="src-panel">
+    <button type="button" class="nav-item" data-screen="calendar"><span class="ico">▦</span>开市日历</button>
+    <button type="button" class="nav-item" data-screen="settings"><span class="ico">⚙</span>接口设置</button>
+    <div class="src-panel" id="srcPanel" role="button" tabindex="0" title="查看接口配置与连通性">
       <div class="nav-label">数据源</div>
       <div class="src-row"><span class="dot ok" id="ifindNewsDot"></span><span id="ifindNewsSource">iFinD · 财经新闻</span></div>
       <div class="src-row"><span class="dot warn" id="ifindQuoteDot"></span><span id="ifindQuoteSource">iFinD · 行情待查询</span></div>
@@ -678,60 +982,60 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
           </select>
         </span>
 
-        <div class="spacer" style="flex:1"></div>
-
-        <button class="btn sm" id="favFilterBtn">★ 仅看收藏</button>
+        <button class="btn sm" id="favFilterBtn" aria-pressed="false">★ 仅看收藏</button>
         <span class="selwrap">
           <select class="select" data-filter="sort">
             <option value="time">按时间倒序</option>
             <option value="stars">按信息重要度</option>
           </select>
         </span>
+
+        <!-- 原右栏统计卡改为行内紧凑展示 -->
+        <div class="fb-stats">
+          <span class="fb-stat">命中 <b class="tnum" id="stTotal">6</b></span>
+          <span class="fb-stat">高重要度 <b class="tnum" id="stHot">3</b></span>
+          <span class="fb-stat">收藏 <b class="tnum" id="stFav">0</b></span>
+        </div>
       </div>
 
       <div class="feed-grid">
         <div class="feed-col">
           <div class="feedlist scroll" id="feedList"></div>
+          <div class="feed-pager" id="feedPager" hidden></div>
         </div>
 
         <aside class="rail-col">
-          <div class="stat-grid">
-            <div class="stat"><div class="k">当前命中</div><div class="v tnum" id="stTotal">6</div><div class="d" id="stTotalD">最近7天新闻</div></div>
-            <div class="stat"><div class="k">其中高重要度</div><div class="v tnum" id="stHot">3</div><div class="d">≥4★，优先查看</div></div>
-            <div class="stat"><div class="k">我的收藏</div><div class="v tnum" id="stFav">0</div><div class="d">条快讯</div></div>
-            <div class="stat"><div class="k">涉及个股</div><div class="v tnum" id="stStocks">—</div><div class="d">去重后</div></div>
-          </div>
-
-          <div class="card" style="padding:14px">
-            <div class="sec-title" style="margin-bottom:10px">开市日历 · 本周</div>
-            <div class="weekstrip" id="weekStrip"></div>
-            <div class="muted" style="font-size:11px;margin-top:9px;line-height:1.5" id="weekNote"></div>
+          <div class="card rail-cal">
+            <div class="cal-hd">
+              <div class="m" id="railCalTitle">—</div>
+              <div class="cal-nav">
+                <button type="button" id="railCalPrev" title="上个月">‹</button>
+                <button type="button" id="railCalNext" title="下个月">›</button>
+              </div>
+            </div>
+            <div class="cal-grid" id="railCalGrid"></div>
+            <div class="cal-legend" style="margin-top:8px;gap:10px">
+              <span class="li"><span class="sw" style="background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)"></span>开市</span>
+              <span class="li"><span class="sw" style="background:var(--surface-3)"></span>周末</span>
+              <span class="li"><span class="sw" style="background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)"></span>节假日</span>
+            </div>
+            <div class="muted rail-cal-note" id="weekNote"></div>
           </div>
 
           <div class="card">
-            <div class="sec-title" style="padding:13px 14px 0;margin-bottom:6px">信息重要度榜</div>
-            <div class="hotlist scroll" id="hotList"></div>
-          </div>
-
-          <div class="card" style="padding:14px">
-            <div class="sec-title" style="margin-bottom:6px">
-              标签词云
-              <button class="btn sm" id="cloudToggle" style="margin-left:auto;font-weight:400">表格</button>
+            <div class="sec-title" style="padding:13px 12px 0 14px;margin-bottom:2px">
+              人气榜 · 东方财富
+              <button class="btn sm rank-refresh" id="rankRefreshBtn" type="button" title="重新抓取最新人气榜">⟳ 更新</button>
             </div>
-            <div id="cloudWrap"></div>
-            <div class="cal-legend" id="cloudLegend" style="margin-top:12px">
-              <span class="li"><span class="sw" style="background:var(--s1)"></span>政策 / 宏观</span>
-              <span class="li"><span class="sw" style="background:var(--s2)"></span>行业 / 产业</span>
-              <span class="li"><span class="sw" style="background:var(--s3)"></span>海外 / 资金</span>
-            </div>
-            <div class="muted" style="font-size:11px;margin-top:8px;line-height:1.5">
-              字号表示出现次数；统计口径：全库近 7 日 · 示例数据
-            </div>
+            <div class="rank-meta" id="rankMeta">正在获取…</div>
+            <div class="ranklist" id="rankList"></div>
+            <a class="rank-src" href="https://guba.eastmoney.com/rank/" target="_blank" rel="noopener"
+               title="在新标签页打开东方财富个股人气榜">东方财富个股人气榜 ↗</a>
           </div>
         </aside>
       </div>
       <div class="footer">
-        <span>示例数据仅用于界面评审，非真实行情与真实快讯。数据源入口：华尔街见闻 wallstreetcn.com/live（已实测可访问）</span>
+        <span>数据状态以页面顶部标识为准；外部数据源不可用时页面会明确回退为缓存或示例内容。结论为条件性推演，不构成投资建议或收益预测。</span>
         <span>FinSight · 财经新闻分析</span>
       </div>
     </section>
@@ -950,7 +1254,38 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
     </section>
 
-    <!-- ================= 开市日历 ================= -->
+    <!-- ================= 接口设置 ================= -->
+    <section class="screen" id="s-settings">
+      <div class="page-head">
+        <div>
+          <h1>接口设置</h1>
+          <div class="desc">密钥放在本地配置文件里，<b>不进 Git、页面不显示明文</b>；展示机用项目内配置，同学本地部署复制模板填写</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm primary" id="healthAllBtn">全部检测</button>
+          <button class="btn sm" id="healthRefreshBtn">刷新状态</button>
+        </div>
+      </div>
+
+      <div class="api-note" id="apiNote">正在读取本机配置…</div>
+      <div id="apiList"></div>
+
+      <div class="card api-foot">
+        <div class="sec-title">如何填写密钥</div>
+        <ol class="api-steps">
+          <li><b>本机部署（推荐）</b>：双击 <code>打开配置文件.cmd</code>，会自动生成并打开 <code>api-config.json</code>，填好后保存</li>
+          <li><b>跨项目复用</b>：双击 <code>设置密钥.cmd</code>，逐项粘贴（写入用户目录，优先级低于项目配置）</li>
+          <li>重新双击 <code>启动展示站.cmd</code>，回到本页点「全部检测」确认连通</li>
+        </ol>
+        <ul class="api-paths" id="apiPaths"></ul>
+        <div class="muted api-foot-note">
+          网页不提供写入能力：公网部署时即使有人打开本页，也无法修改或读取你的密钥。
+          <code>api-config.json</code> 已被 .gitignore 忽略，也不会打进上传包。
+        </div>
+      </div>
+    </section>
+
+  <!-- ================= 开市日历 ================= -->
     <section class="screen" id="s-calendar">
       <div class="page-head">
         <div>
@@ -987,7 +1322,7 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
 
       <div class="card" style="padding:16px 18px;margin-top:18px">
-        <div class="sec-title">2026 年休市安排</div>
+        <div class="sec-title">2026–2027 年休市安排</div>
         <div class="tblwrap scroll">
           <table class="tbl">
             <thead><tr><th>假期</th><th>放假日期</th><th>天数</th><th>调休上班日（<span style="color:var(--up)">仍休市</span>）</th></tr></thead>
@@ -995,7 +1330,8 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
           </table>
         </div>
         <div class="muted" style="font-size:11.5px;margin-top:10px">
-          来源：国务院办公厅《关于2026年部分节假日安排的通知》（国办发明电〔2025〕7号）。
+          2026 年来源：国务院办公厅《关于2026年部分节假日安排的通知》（国办发明电〔2025〕7号）；
+          2027 年据 2026 年 11 月公布的放假方案整理，具体调休上班日待交易所公布。
           调休上班日虽是工作日，但沪深交易所不安排交易，因此仍计为休市。
         </div>
       </div>
@@ -1151,8 +1487,18 @@ const HOLIDAY_RANGES = [
   ['2026-06-19','2026-06-21','端午节'],
   ['2026-09-25','2026-09-27','中秋节'],
   ['2026-10-01','2026-10-07','国庆节'],
+  // 2027 年：据 2026 年 11 月公布的放假方案整理
+  ['2027-01-01','2027-01-03','元旦'],
+  ['2027-02-05','2027-02-12','春节'],
+  ['2027-04-03','2027-04-05','清明节'],
+  ['2027-04-30','2027-05-04','劳动节'],
+  ['2027-06-09','2027-06-09','端午节'],
+  ['2027-09-15','2027-09-15','中秋节'],
+  ['2027-10-01','2027-10-07','国庆节'],
 ];
 const MAKEUP_DAYS = ['2026-01-04','2026-02-14','2026-02-28','2026-05-09','2026-09-20','2026-10-10'];
+// 哪几年的调休上班日已落实到具体日期；未覆盖的年份只提示"待公布"，不臆造日期。
+const MAKEUP_COVERAGE = { 2026:true, 2027:false };
 
 /* 假期 → 所属调休上班日。直接照抄通知原文的归属，不做日期邻近推算
    （春节的 2/14 在假期开始前、国庆的 9/20 在假期开始前，按邻近推算会漏掉） */
@@ -1164,6 +1510,13 @@ const HOLIDAY_TABLE = [
   ['端午节','2026-06-19','2026-06-21',[]],
   ['中秋节','2026-09-25','2026-09-27',[]],
   ['国庆节','2026-10-01','2026-10-07',['2026-09-20','2026-10-10']],
+  ['元旦',  '2027-01-01','2027-01-03',[]],
+  ['春节',  '2027-02-05','2027-02-12',null],
+  ['清明节','2027-04-03','2027-04-05',[]],
+  ['劳动节','2027-04-30','2027-05-04',null],
+  ['端午节','2027-06-09','2027-06-09',[]],
+  ['中秋节','2027-09-15','2027-09-15',[]],
+  ['国庆节','2027-10-01','2027-10-07',null],
 ];
 
 const HOLIDAYS = {};
@@ -1418,9 +1771,31 @@ let selectedImportStars = 0;
 /* ============================================================
    3. 全局状态
    ============================================================ */
+/* ---- 本地状态持久化：只存界面偏好，不含任何个人信息 ---- */
+const STORE_PREFIX='fs.';
+function readStore(key,fallback){
+  try{
+    const raw=localStorage.getItem(STORE_PREFIX+key);
+    if(raw===null) return fallback;
+    const val=JSON.parse(raw);
+    return val===null||val===undefined?fallback:val;
+  }catch(e){ return fallback; }
+}
+function writeStore(key,value){
+  try{ localStorage.setItem(STORE_PREFIX+key,JSON.stringify(value)); }catch(e){}
+}
+const savedFilters=readStore('filters',{});
+const savedFavorites=readStore('fav',[]);
 const state = {
-  filters:{ date:null, stars:0, tag:'all', sort:'time', favOnly:false },
-  favorites:new Set(NEWS.filter(n=>n.fav).map(n=>n.id)),
+  filters:{
+    date: typeof savedFilters.date==='string'?savedFilters.date:null,
+    stars: [0,1,2,3,4,5].includes(Number(savedFilters.stars))?Number(savedFilters.stars):0,
+    tag: typeof savedFilters.tag==='string'?savedFilters.tag:'all',
+    sort: savedFilters.sort==='stars'?'stars':'time',
+    favOnly: savedFilters.favOnly===true,
+  },
+  favorites:new Set([...NEWS.filter(n=>n.fav).map(n=>n.id),
+    ...(Array.isArray(savedFavorites)?savedFavorites.filter(x=>typeof x==='string'):[])]),
   cal:{ y:Number(TODAY.slice(0,4)), m:Number(TODAY.slice(5,7))-1 },
   pick:{ y:Number(TODAY.slice(0,4)), m:Number(TODAY.slice(5,7))-1 },
 };
@@ -1605,14 +1980,18 @@ function syncTagOptions(){
   select.innerHTML='<option value="all">全部标签</option>'+FIXED_TAGS.map(tag=>`<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join('');
   select.value=FIXED_TAGS.includes(current)?current:'all'; state.filters.tag=select.value;
 }
-function resetLiveFeedFilters(){
+function clearAllFilters(){
   state.filters={date:null,stars:0,tag:'all',sort:'time',favOnly:false};
+  if($('#feedSearch')) $('#feedSearch').value='';
   $('#dateBtn').textContent='全部日期 ▾';
   $('#datePanel').classList.remove('on');
   $$('.seg[data-filter="stars"] button').forEach(button=>button.classList.toggle('on',button.dataset.v==='0'));
-  $$('select[data-filter="sort"]').forEach(select=>{select.value='time';});
+  // 先同步下拉值，再重建选项；否则 syncTagOptions 会把旧值写回 filters
+  const tagSel=$('[data-filter="tag"]'); if(tagSel) tagSel.value='all';
+  const sortSel=$('[data-filter="sort"]'); if(sortSel) sortSel.value='time';
   syncTagOptions();
   syncFavUI();
+  renderFeed();
 }
 function syncTodayState(){
   const nextToday=todayInShanghai();
@@ -1716,7 +2095,8 @@ async function loadLiveNews(manual=false){
   const controller=new AbortController();
   liveNewsController=controller;
   if(manual && button){ button.disabled=true; button.textContent='⟳ 正在刷新…'; }
-  if(manual) resetLiveFeedFilters();
+  // 手动刷新只更新数据，不清空用户正在使用的筛选条件（保留阅读上下文）
+  if(manual) $('#datePanel').classList.remove('on');
   let accumulated=[],successfulDays=0,cacheDays=0,manualCount=0,requeuedCount=0;
   const failedDates=[];
   for(let index=0;index<dates.length;index+=1){
@@ -1772,18 +2152,32 @@ async function loadLiveNews(manual=false){
 /* ============================================================
    4. 屏幕切换
    ============================================================ */
+let currentScreen='feed';
+const scrollMemory={};
 function showScreen(id){
+  if(currentScreen && currentScreen!==id) scrollMemory[currentScreen]=window.scrollY;
   $$('.screen').forEach(s=>s.classList.toggle('active', s.id==='s-'+id));
-  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===id));
+  $$('.nav-item').forEach(n=>{
+    const on=n.dataset.screen===id;
+    n.classList.toggle('active', on);
+    if(on) n.setAttribute('aria-current','page'); else n.removeAttribute('aria-current');
+  });
   $$('.pop-panel').forEach(p=>p.classList.remove('on'));
   if(id==='calendar') renderMarketCal();
-  window.scrollTo({top:0,behavior:'instant'});
+  if(id==='settings') loadHealth();
+  // 写入 hash：刷新、分享、前进后退都能停在原页
+  try{ history.replaceState(null,'','#'+id); }catch(e){}
+  const back=scrollMemory[id]||0;
+  currentScreen=id;
+  window.scrollTo({top:back,behavior:'instant'});
 }
 $$('.nav-item[data-screen]').forEach(n=>n.addEventListener('click',()=>showScreen(n.dataset.screen)));
 $('#backToFeed').addEventListener('click',()=>showScreen('feed'));
 $('#themeBtn').addEventListener('click',()=>{
   const cur=document.documentElement.dataset.theme;
-  document.documentElement.dataset.theme = cur==='light'?'dark':'light';
+  const next=cur==='light'?'dark':'light';
+  document.documentElement.dataset.theme=next;
+  try{ localStorage.setItem(STORE_PREFIX+'theme',next); }catch(e){}
 });
 
 /* ============================================================
@@ -1840,7 +2234,7 @@ function bindCalendar(host, mode, onPick){
   }));
 }
 
-function calHeader(y,m,{minY=2026,minM=0,maxY=2026,maxM=11}={}){
+function calHeader(y,m,{minY=2026,minM=0,maxY=2027,maxM=11}={}){
   const atMin = (y===minY&&m===minM), atMax = (y===maxY&&m===maxM);
   return `<div class="cal-hd"><div class="m">${y} 年 ${m+1} 月</div>
     <div class="cal-nav">
@@ -1850,16 +2244,34 @@ function calHeader(y,m,{minY=2026,minM=0,maxY=2026,maxM=11}={}){
 }
 
 /* ---- 快讯流：日期筛选 ---- */
+let datePanelLocated=false;
 function renderDatePanel(){
+  // 首次打开时若当前月没有任何快讯，自动定位到最近有快讯的月份；
+  // 否则整月日期全是灰的，用户会误以为筛选坏了。
+  if(!datePanelLocated){
+    datePanelLocated=true;
+    const ym=`${state.pick.y}-${pad(state.pick.m+1)}`;
+    const hasCurrent=NEWS.some(n=>n.date && n.date.startsWith(ym));
+    if(!hasCurrent){
+      const dates=NEWS.map(n=>n.date).filter(Boolean).sort();
+      const latest=dates[dates.length-1];
+      if(latest && Number(latest.slice(0,4))===2026){
+        state.pick={y:Number(latest.slice(0,4)),m:Number(latest.slice(5,7))-1};
+      }
+    }
+  }
   const {y,m}=state.pick;
   $('#datePanel').innerHTML =
-    calHeader(y,m) +
+    calHeader(y,m,{minY:2026,minM:0,maxY:2026,maxM:11}) +
     `<div class="cal-grid">${calendarHTML('news',y,m,state.filters.date)}</div>
      <div class="cal-foot">
        <span>仅可选有快讯的日期</span>
        <button class="btn sm" data-clear="1">清除筛选</button>
      </div>`;
-  $$('[data-nav]',$('#datePanel')).forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-nav]',$('#datePanel')).forEach(b=>b.addEventListener('click',(e)=>{
+    // 翻月会重建整个面板，被点的按钮随即脱离文档；若让事件继续冒泡，
+    // document 上的"点外部关闭"会因 contains() 为 false 而误关弹层。
+    e.stopPropagation();
     state.pick.m += +b.dataset.nav;
     if(state.pick.m<0){state.pick.m=11;state.pick.y--;}
     if(state.pick.m>11){state.pick.m=0;state.pick.y++;}
@@ -1880,11 +2292,20 @@ function renderDatePanel(){
 }
 
 /* ---- 开市日历屏 ---- */
+let calHighlight=null;
+/* 从右栏周条跳转到开市日历：定位到该月并高亮该日 */
+function openCalendarAt(ds){
+  if(!ds) return;
+  state.cal={y:Number(ds.slice(0,4)),m:Number(ds.slice(5,7))-1};
+  calHighlight=ds;
+  showScreen('calendar');
+  renderMarketCal();
+}
 function renderMarketCal(){
   const {y,m}=state.cal;
   $('#calTitle').textContent = `${y} 年 ${m+1} 月`;
   // calendarHTML 内部已输出星期表头，此处不再重复
-  $('#calGrid').innerHTML = calendarHTML('market',y,m,null);
+  $('#calGrid').innerHTML = calendarHTML('market',y,m,calHighlight);
 
   const days=new Date(y,m+1,0).getDate();
   let open=0, closed=0;
@@ -1899,36 +2320,113 @@ function renderMarketCal(){
     Math.round((parseD(nx)-parseD(TODAY))/86400000)} 天`;
 
   $('#calPrev').disabled    = (y===2026&&m===0);
-  $('#calNextBtn').disabled  = (y===2026&&m===11);
+  $('#calNextBtn').disabled  = (y===2027&&m===11);
 }
 $('#calPrev').addEventListener('click',()=>{ state.cal.m--; if(state.cal.m<0){state.cal.m=11;state.cal.y--;} renderMarketCal(); });
 $('#calNextBtn').addEventListener('click',()=>{ state.cal.m++; if(state.cal.m>11){state.cal.m=0;state.cal.y++;} renderMarketCal(); });
 $('#calToday').addEventListener('click',()=>{ state.cal={y:Number(TODAY.slice(0,4)),m:Number(TODAY.slice(5,7))-1}; renderMarketCal(); });
 
-/* ---- 顶栏市场状态 + 本周条 ---- */
+/* ---- 右栏：东方财富人气榜（服务端代理 /api/rank） ---- */
+let rankLoading=false;
+let rankCache=null;
+function renderRankRows(data){
+  const el=$('#rankList'); if(!el) return;
+  const items=(data&&Array.isArray(data.items))?data.items:[];
+  if(!items.length){
+    el.innerHTML='<div class="rank-meta">暂无数据</div>';
+    return;
+  }
+  el.innerHTML=items.map(it=>{
+    const ch=it.changePct;
+    const chVal=(typeof ch==='number')?`${ch>0?'+':''}${ch.toFixed(2)}%`:'—';
+    const chCls=(typeof ch==='number')?(ch>0?'up':ch<0?'down':''):'';
+    const px=(typeof it.price==='number')?it.price.toFixed(2):'—';
+    const nm=it.name||'—';
+    return `<div class="rankrow" title="${escapeHtml(nm)} ${escapeHtml(it.code)} · 第 ${it.rank} 名">
+      <span class="rk${it.rank<=3?' top':''}">${it.rank}</span>
+      <span class="nm">${escapeHtml(nm)}<span class="cd">${escapeHtml(it.code)}</span></span>
+      <span class="px"><span class="p">${px}</span><br><span class="ch ${chCls}">${chVal}</span></span>
+    </div>`;
+  }).join('');
+}
+function renderRankMeta(data){
+  const meta=$('#rankMeta'); if(!meta) return;
+  if(!data||data.ok===false){
+    meta.className='rank-meta err';
+    meta.textContent=(data&&data.error)?data.error:'暂时无法获取人气榜。';
+    return;
+  }
+  meta.className='rank-meta';
+  meta.textContent=`更新于 ${data.updatedAtText||'—'} · 来源 东方财富（非交易建议）`;
+}
+async function loadRank(manual){
+  if(rankLoading) return;
+  rankLoading=true;
+  const btn=$('#rankRefreshBtn');
+  const meta=$('#rankMeta');
+  if(btn){ btn.disabled=true; btn.textContent='⟳ 更新中…'; }
+  if(meta && !rankCache){ meta.className='rank-meta'; meta.textContent='正在获取…'; }
+  try{
+    const res=await fetch('/api/rank?limit=20',{cache:'no-store'});
+    const data=await res.json();
+    rankCache=data;
+    renderRankMeta(data);
+    renderRankRows(data);
+    if(manual && data && data.ok!==false){ meta.textContent=`更新于 ${data.updatedAtText} · 来源 东方财富（非交易建议）`; }
+  }catch(err){
+    renderRankMeta({ok:false,error:'网络异常，未能获取人气榜。'});
+  }finally{
+    rankLoading=false;
+    if(btn){ btn.disabled=false; btn.textContent='⟳ 更新'; }
+  }
+}
+/* ---- 右栏：整月开市日历（只读展示，点击某天跳工具页定位） ---- */
+const railCal={ y:Number(TODAY.slice(0,4)), m:Number(TODAY.slice(5,7))-1 };
+function renderRailCalendar(){
+  const grid=$('#railCalGrid'); if(!grid) return;
+  const {y,m}=railCal;
+  const title=$('#railCalTitle');
+  if(title) title.textContent=`${y} 年 ${m+1} 月`;
+  grid.innerHTML=calendarHTML('market',y,m,null);
+  $$('.cal-d',grid).forEach(el=>{
+    const ds=el.dataset.d;
+    if(!ds) return;
+    el.removeAttribute('disabled');       // 只读展示但允许点开详情
+    el.style.cursor='pointer';
+    el.addEventListener('click',()=>openCalendarAt(ds));
+  });
+  const prev=$('#railCalPrev'), next=$('#railCalNext');
+  if(prev) prev.disabled=(y===2026&&m===0);
+  if(next) next.disabled=(y===2027&&m===11);
+}
+if($('#railCalPrev')) $('#railCalPrev').addEventListener('click',()=>{
+  railCal.m--; if(railCal.m<0){railCal.m=11;railCal.y--;} renderRailCalendar();
+});
+if($('#railCalNext')) $('#railCalNext').addEventListener('click',()=>{
+  railCal.m++; if(railCal.m>11){railCal.m=0;railCal.y++;} renderRailCalendar();
+});
+
+/* ---- 顶栏市场状态 ---- */
 function renderMarketBits(){
   const st=mkt(TODAY);
   $('#mktTag').innerHTML = `<span class="dot ${st.open?'ok':'off'}"></span>
     今日 ${TODAY.slice(5)} 周${WD[parseD(TODAY).getDay()]} · ${st.open?'开市':'休市'}`;
   $('#mktTag').title = st.label;
 
-  const base = parseD(TODAY);
-  const sun  = new Date(base); sun.setDate(sun.getDate()-base.getDay());
-  $('#weekStrip').innerHTML = ['日','一','二','三','四','五','六']
-      .map(w=>`<div class="d">${w}</div>`).join('')
-    + Array.from({length:7},(_,i)=>{
-        const d=new Date(sun); d.setDate(sun.getDate()+i);
-        const ds=fmtD(d), mk=mkt(ds);
-        const cls='c'+(mk.open?' open':'')+(ds===TODAY?' today':'');
-        const t = mk.kind==='makeup' ? '调休上班但仍休市' : mk.label;
-        return `<div class="${cls}" title="${ds} ${t}">${d.getDate()}</div>`;
-      }).join('');
+  renderRailCalendar();
 
   // 若今天本身就是调休上班日，说"今天"而不是"下一次"
   const nx = MAKEUP_DAYS.filter(d=>d>TODAY).sort()[0];
+  // 调休表只覆盖当前年度：年内已无剩余调休日时 nx 为空，不能直接插值，
+  // 否则会渲染成 "undefined（周undefined）"。
+  const makeupKnown = MAKEUP_COVERAGE[TODAY.slice(0,4)] !== false;
   $('#weekNote').innerHTML = MAKEUP[TODAY]
     ? `今天 <b class="tnum">${TODAY}</b> 是调休上班日，但沪深交易所<b>不交易</b>。`
-    : `下一次调休上班：<b class="tnum">${nx}</b>（周${WD[parseD(nx).getDay()]}）—— 上班但<b>不交易</b>。`;
+    : !makeupKnown
+      ? `${TODAY.slice(0,4)} 年调休上班日待交易所公布；周末与法定节假日仍休市。`
+      : nx
+        ? `下一次调休上班：<b class="tnum">${nx}</b>（周${WD[parseD(nx).getDay()]}）—— 上班但<b>不交易</b>。`
+        : `本年度已无剩余调休上班日。`;
 }
 
 /* 点击面板外部关闭 */
@@ -1961,13 +2459,47 @@ function syncFavUI(){
   b.style.borderColor= on?'transparent':'';
   b.style.color      = on?'var(--warn)':'';
   b.style.fontWeight = on?'600':'';
+  b.setAttribute('aria-pressed', String(on));
 }
 $('#favFilterBtn').addEventListener('click',()=>{
   state.filters.favOnly=!state.filters.favOnly; syncFavUI(); renderFeed();
 });
 
+function restoreFilterControls(){
+  const f=state.filters;
+  // 存储的日期可能已不在当前新闻集合里（数据刷新过），失效则清空
+  if(f.date && !NEWS.some(n=>n.date===f.date)) f.date=null;
+  $('#dateBtn').textContent = f.date ? f.date+' ▾' : '全部日期 ▾';
+  $$('.seg[data-filter="stars"] button').forEach(b=>{
+    b.classList.toggle('on', Number(b.dataset.v)===f.stars);
+  });
+  const tagSel=$('[data-filter="tag"]');
+  if(tagSel) tagSel.value = FIXED_TAGS.includes(f.tag) ? f.tag : 'all';
+  const sortSel=$('[data-filter="sort"]');
+  if(sortSel) sortSel.value=f.sort;
+  syncFavUI();
+}
+const PAGE_SIZE=10;   // 快讯流每页条数；想更短/更长只改这里
+let feedPage=1;
+let lastFeedKey='';
+function renderFeedPager(total,pageCount,start,shown){
+  const el=$('#feedPager'); if(!el) return;
+  if(total<=PAGE_SIZE){ el.hidden=true; el.innerHTML=''; return; }
+  el.hidden=false;
+  el.innerHTML=`
+    <button class="btn sm" type="button" data-feed-page="prev" ${feedPage<=1?'disabled':''}>← 上一页</button>
+    <span class="pg-info">第 <b>${feedPage}</b> / ${pageCount} 页 · 共 ${total} 条（本页 ${start+1}–${start+shown}）</span>
+    <button class="btn sm" type="button" data-feed-page="next" ${feedPage>=pageCount?'disabled':''}>下一页 →</button>`;
+  $$('[data-feed-page]',el).forEach(b=>b.addEventListener('click',()=>{
+    if(b.disabled) return;
+    feedPage += b.dataset.feedPage==='next'?1:-1;
+    renderFeed();
+    window.scrollTo({top:0,behavior:'instant'});
+  }));
+}
 function renderFeed(){
   const f=state.filters;
+  writeStore('filters',f);   // 筛选条件随每次渲染落盘
   const query=($('#feedSearch')?.value||'').trim().toLowerCase();
   let list=NEWS.filter(n=>
     (!f.date || n.date===f.date) &&
@@ -1979,11 +2511,21 @@ function renderFeed(){
   if(f.sort==='stars') list=[...list].sort((a,b)=>b.stars-a.stars);
   else                 list=[...list].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
 
-  $('#feedList').innerHTML = list.length? list.map(n=>`
+  // 筛选或搜索一变就回到第 1 页，避免停留在越界的空页
+  const filterKey=[f.date,f.stars,f.tag,f.sort,f.favOnly,query].join('|');
+  if(filterKey!==lastFeedKey){ lastFeedKey=filterKey; feedPage=1; }
+  const total=list.length;
+  const pageCount=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(feedPage>pageCount) feedPage=pageCount;
+  const start=(feedPage-1)*PAGE_SIZE;
+  const pageItems=list.slice(start,start+PAGE_SIZE);
+
+  $('#feedList').innerHTML = pageItems.length? pageItems.map(n=>`
     <article class="news" data-id="${n.id}">
       <div class="time">${n.date?(n.hasExactTime===false?n.date.slice(5):n.time):'日期未提供'}${!n.date||n.hasExactTime===false?'':`<span class="d">${n.date.slice(5)}</span>`}</div>
       <div class="body">
         <button class="fav ${state.favorites.has(n.id)?'on':''}" data-fav="${n.id}"
+          aria-pressed="${state.favorites.has(n.id)}" aria-label="${state.favorites.has(n.id)?'取消收藏':'加入收藏'}"
           title="${state.favorites.has(n.id)?'取消收藏':'加入收藏'}">${state.favorites.has(n.id)?'★':'☆'}</button>
         <div class="meta">
           <span class="chip src">${n.source}</span>
@@ -2001,19 +2543,24 @@ function renderFeed(){
       </div>
     </article>`).join('')
     : `<div class="card" style="padding:40px;text-align:center;color:var(--ink-3)">
-         ${f.favOnly?'还没有收藏任何快讯，点卡片右上角的 ☆ 加入收藏':'当前筛选条件下没有快讯'}</div>`;
+         <div>${f.favOnly?'还没有收藏任何快讯，点卡片右上角的 ☆ 加入收藏':'当前筛选条件下没有快讯'}</div>
+         ${f.favOnly?'':'<button class="btn sm" type="button" data-clear-filters="1" style="margin-top:12px">清除全部筛选</button>'}
+       </div>`;
+  renderFeedPager(total,pageCount,start,pageItems.length);
 
+  $$('[data-clear-filters]').forEach(b=>b.addEventListener('click',clearAllFilters));
   $$('.news').forEach(el=>el.addEventListener('click',()=>gotoAnalysis(el.dataset.id)));
   $$('.fav').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
     const id=b.dataset.fav;
     state.favorites.has(id) ? state.favorites.delete(id) : state.favorites.add(id);
+    writeStore('fav',[...state.favorites]);
     renderFeed(); syncFavUI();
   }));
 
   $('#navCount').textContent=NEWS.length;
   $('#stTotal').textContent=list.length;
-  $('#stTotalD').textContent = f.favOnly
+  if($('#stTotalD')) $('#stTotalD').textContent = f.favOnly
     ? '当前为收藏筛选'
     : (f.date ? `筛选日期 ${f.date}` : `${dataMode==='live'?'最近7天新闻':'示例快讯'}共 ${list.length} 条`);
   $('#stHot').textContent   =list.filter(n=>n.stars>=4).length;
@@ -2021,13 +2568,8 @@ function renderFeed(){
   // 去重统计：同一标的可能同时出现在多条快讯的传导链中
   const codes=new Set();
   list.forEach(n=>n.chain.forEach(c=>c.items.forEach(i=>codes.add(i.code))));
-  $('#stStocks').textContent=codes.size;
+  if($('#stStocks')) $('#stStocks').textContent=codes.size;
 
-  $('#hotList').innerHTML=[...NEWS].sort((a,b)=>b.stars-a.stars).slice(0,5)
-    .map((n,i)=>`<div class="hotrow" data-id="${n.id}">
-        <span class="rank ${i===0?'top':''}">${i+1}</span>
-        <span class="t">${n.title}</span></div>`).join('');
-  $$('#hotList .hotrow').forEach(el=>el.addEventListener('click',()=>gotoAnalysis(el.dataset.id)));
 }
 $$('.seg[data-filter]').forEach(seg=>seg.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
@@ -2037,7 +2579,11 @@ $$('.seg[data-filter]').forEach(seg=>seg.addEventListener('click',e=>{
 $$('.select[data-filter]').forEach(sel=>sel.addEventListener('change',()=>{
   state.filters[sel.dataset.filter]=sel.value; renderFeed();
 }));
-$('#feedSearch').addEventListener('input',renderFeed);
+$('#feedSearch').addEventListener('input',()=>{
+  // 搜索框在每个页面都可见：在别的页面输入时先回到快讯流，否则看不到结果
+  if(currentScreen!=='feed') showScreen('feed');
+  renderFeed();
+});
 $('#feedRefreshBtn').addEventListener('click',()=>loadLiveNews(true));
 
 /* ============================================================
@@ -2124,10 +2670,17 @@ function renderImports(){
         </div>
       </td>
     </tr>`;
-  }).join(''):'<tr><td colspan="7" style="padding:34px;text-align:center;color:var(--ink-3)">还没有导入记录</td></tr>';
+  }).join(''):'<tr class="empty-row"><td colspan="7" style="padding:34px;text-align:center;color:var(--ink-3)">还没有导入记录</td></tr>';
   const pending=IMPORTS.filter(r=>r.status==='pending');
   $('#navImp').textContent=pending.length;
   $('#impPending').textContent=pending.filter(r=>importTime(r.imported_at).slice(0,10)===TODAY).length;
+  // 没有待打标新闻时按钮不可点，并说明原因
+  const tagBtn=$('#importTagBtn');
+  if(tagBtn){
+    tagBtn.disabled=pending.length===0;
+    tagBtn.textContent=pending.length?'开始打标':'暂无待打标';
+    tagBtn.title=pending.length?`共 ${pending.length} 条待打标`:'当前没有待打标新闻，导入后需先打标';
+  }
   $$('[data-import-id]').forEach(button=>button.addEventListener('click',()=>openImportModal(button.dataset.importId)));
   $$('[data-import-delete]').forEach(button=>button.addEventListener('click',()=>deleteImportRecord(button.dataset.importDelete,button)));
 }
@@ -2188,7 +2741,11 @@ async function prepareImportSummary(id){
   $('#importModalStatus').style.color='var(--ink-3)';
   $('#importSummaryRetry').hidden=true;
   try{
-    const response=await fetch(`/api/imports/${encodeURIComponent(id)}/prepare`,{method:'POST'});
+    // 服务端对所有 POST 强制要求 Content-Type: application/json（见 app.py 的 415 分支），
+    // 这里原本未设置请求头，会被判为 text/plain 而直接拒掉。
+    const response=await fetch(`/api/imports/${encodeURIComponent(id)}/prepare`,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})
+    });
     const result=await response.json();
     if(!response.ok||!result.ok||!result.item) throw new Error(result.error||'摘要生成失败');
     const index=IMPORTS.findIndex(item=>item.id===id);
@@ -2266,8 +2823,13 @@ function gotoAnalysis(id){ showScreen('analysis'); openAnalysis(id); }
 
 function setAnalysisButtons(n, loading=analysisTasks.has(n.id)){
   const buttons=[$('#anaRun'),$('#aiRunInline')].filter(Boolean);
+  const blocked=dataMode!=='live';
   buttons.forEach(button=>{
-    button.disabled=loading || dataMode!=='live';
+    button.disabled=loading || blocked;
+    // 禁用必须说明原因，否则用户只看到点不动的按钮
+    button.title=blocked ? '当前为示例数据，接入数据服务后可发起 AI 分析'
+      : (loading ? '正在分析中，请稍候' : '');
+    button.setAttribute('aria-disabled', String(loading || blocked));
     button.textContent=loading?'DeepSeek 分析中…':(n.aiAnalysis?'重新分析':'开始 AI 分析');
   });
   const status=$('#aiStatus');
@@ -2283,7 +2845,7 @@ function setAnalysisButtons(n, loading=analysisTasks.has(n.id)){
   else if(dataMode==='live' && n.raw&&n.raw.manual_import && n.summaryStatus==='fallback') status.textContent='当前显示本地规则整理的导入摘要，点击后调用 DeepSeek 做完整分析。';
   else if(dataMode==='live' && n.summaryStatus==='fallback') status.textContent='当前显示 iFinD 原摘要，点击后调用 DeepSeek 做完整分析。';
   else if(dataMode==='live') status.textContent='摘要已由 DeepSeek 整理，点击后调用 DeepSeek 做完整分析。';
-  else status.textContent='当前是示例数据，请先通过 http://127.0.0.1:3000 打开网站。';
+  else status.textContent='当前为示例数据；接入数据服务后即可发起 AI 分析。';
 }
 
 async function runAiAnalysis(id){
@@ -2667,7 +3229,7 @@ function openAnalysis(id){
       <td class="num">${Math.round(r.conf*100)}%</td>
       <td class="num">${Number.isFinite(r.px)?r.px.toFixed(2):'—'}</td>
     </tr>`).join('')
-    : `<tr><td colspan="7" class="muted" style="padding:24px;text-align:center">${emptyStockMessage}</td></tr>`;
+    : `<tr class="empty-row"><td colspan="7" class="muted" style="padding:24px;text-align:center">${emptyStockMessage}</td></tr>`;
 
   const coverage=Array.isArray(n.aiAnalysis&&n.aiAnalysis.stock_coverage)?n.aiAnalysis.stock_coverage:[];
   const directCoverage=Array.isArray(n.aiAnalysis&&n.aiAnalysis.direct_stock_coverage)?n.aiAnalysis.direct_stock_coverage:[];
@@ -3021,40 +3583,6 @@ function renderKline(host,candles,dates=DATES,event=null){
 }
 
 /* ============================================================
-   12. 标签词云
-   字号 = 出现次数（连续量级 → 单通道），颜色 = 标签类别（身份 → 分类色板）
-   两个通道各司其职，不做"越大越深"的重复编码
-   ============================================================ */
-const TAG_STATS = [
-  ['宏观级',14,'宏观级'],['行业级',12,'行业级'],['公司级',8,'公司级'],['混合级',6,'混合级']
-];
-const TAG_CAT = {'宏观级':'var(--s1)','行业级':'var(--s2)','公司级':'var(--s3)','混合级':'var(--warn)'};
-let cloudMode = 'cloud';
-
-function renderCloud(){
-  if(cloudMode==='cloud'){
-    const vals=TAG_STATS.map(t=>t[1]), max=Math.max(...vals), min=Math.min(...vals);
-    $('#cloudWrap').innerHTML = '<div class="cloud">' + TAG_STATS.map(([t,c,cat])=>{
-      const fs=(11+(c-min)/(max-min)*19).toFixed(1);
-      return `<span class="cw" style="font-size:${fs}px;color:${TAG_CAT[cat]}"
-                title="${t}：${c} 条">${t}</span>`;
-    }).join('') + '</div>';
-    $('#cloudLegend').style.display='';
-  } else {
-    // 表格视图：词云的等价读数，颜色不单独承载信息
-    $('#cloudWrap').innerHTML = '<table class="cloudtbl">' + TAG_STATS.map(([t,c,cat])=>
-      `<tr><td>${t} <span class="cat">${cat}</span></td><td class="n">${c}</td></tr>`).join('')
-      + '</table>';
-    $('#cloudLegend').style.display='none';
-  }
-}
-$('#cloudToggle').addEventListener('click',()=>{
-  cloudMode = cloudMode==='cloud' ? 'table' : 'cloud';
-  $('#cloudToggle').textContent = cloudMode==='cloud' ? '表格' : '词云';
-  renderCloud();
-});
-
-/* ============================================================
    13. 2026 休市安排表
    ============================================================ */
 function renderHolidayTable(){
@@ -3064,7 +3592,7 @@ function renderHolidayTable(){
       <td style="font-weight:600">${name}</td>
       <td class="tnum">${a} 至 ${b}</td>
       <td class="tnum">${days} 天</td>
-      <td class="tnum">${mk.length?mk.map(d=>`${d}（周${WD[parseD(d).getDay()]}）`).join('、'):'<span class="muted">无</span>'}</td>
+      <td class="tnum">${mk===null?'<span class="muted">待交易所公布</span>':mk.length?mk.map(d=>`${d}（周${WD[parseD(d).getDay()]}）`).join('、'):'<span class="muted">无</span>'}</td>
     </tr>`;
   }).join('');
 }
@@ -3072,18 +3600,158 @@ function renderHolidayTable(){
 /* ============================================================
    14. 启动
    ============================================================ */
+restoreFilterControls();
 syncTagOptions();
 renderFeed();
 loadImports();
-renderCloud();
 syncFavUI();
 renderMarketBits();
 renderHolidayTable();
 renderMarketCal();
+loadRank(false);
+if($('#rankRefreshBtn')) $('#rankRefreshBtn').addEventListener('click',()=>loadRank(true));
 openAnalysis('n1');
-showScreen(['feed','analysis','import','calendar'].includes(location.hash.slice(1))
+showScreen(['feed','analysis','import','calendar','settings'].includes(location.hash.slice(1))
   ? location.hash.slice(1) : 'feed');
+/* ============================================================
+   接口设置：只读状态 + 单项目探活
+   网页不提供写入能力，密钥只能由「设置密钥.cmd」落地到本机
+   ============================================================ */
+const API_ORDER=[
+  {key:'ifind', title:'iFinD 授权串', hint:'新闻检索、行情、标的共用同一个授权串'},
+  {key:'deepseek', title:'DeepSeek API Key', hint:'新闻摘要、质量审核与智能分析'},
+  {key:'tavily', title:'Tavily API Key', hint:'可选：分析时补充公开网页证据'},
+  {key:'eastmoney', title:'东方财富人气榜', hint:'公开接口，无需授权'},
+];
+let apiHealthData={providers:{}};
+let apiState={};
+
+/* 凭据来源：告诉使用者这个值是从哪一层读到的，排查时不用猜 */
+const API_SOURCE_LABEL={env:'环境变量',project:'api-config.json',user:'用户配置'};
+
+function apiBadge(kind,text){return `<span class="api-badge ${kind}">${escapeHtml(text)}</span>`;}
+function apiSource(text){
+  const label=API_SOURCE_LABEL[text];
+  return label?`<span class="api-src">${escapeHtml(label)}</span>`:'';
+}
+
+function renderApiList(){
+  const box=$('#apiList'); if(!box) return;
+  const providers=apiHealthData.providers||{};
+  box.innerHTML=API_ORDER.map(cfg=>{
+    const p=providers[cfg.key]||{};
+    let badge,keyText;
+    if(cfg.key==='eastmoney'){
+      badge=apiBadge('ok','免授权'); keyText='<span class="api-key">公开接口</span>';
+    } else if(p.configured){
+      badge=apiBadge('ok','已配置'); keyText=`<span class="api-key">${escapeHtml(p.masked||'')}</span>`;
+    } else {
+      badge=apiBadge('none','未配置'); keyText='<span class="api-key">—</span>';
+    }
+    const st=apiState[cfg.key]||{status:'idle'};
+    let result='<span class="muted">尚未检测</span>';
+    let bad=false;
+    if(st.status==='loading'){result='<span class="muted">检测中…</span>';}
+    else if(st.status==='done'){
+      const r=st.result||{};
+      bad=!r.ok;
+      result=(r.ok?'<span>✓ '+escapeHtml(r.detail||'可用')+'</span>'
+                  :'<span>✕ '+escapeHtml(r.detail||'不可用')+'</span>')
+        +'<span class="ms">'+(r.ms||0)+' ms</span>';
+    }
+    return `<div class="card api-card" data-api="${cfg.key}">
+      <div class="api-head">
+        <span class="api-name">${escapeHtml(cfg.title)}</span>
+        ${keyText}${cfg.key==='eastmoney'?'':apiSource(p.source)}${badge}
+        <button type="button" class="btn sm api-test" data-target="${cfg.key}"${st.status==='loading'?' disabled':''}>检测</button>
+      </div>
+      <div class="api-result${bad?' bad':''}">${result}</div>
+      <div class="muted" style="font-size:12px;margin-top:6px">${escapeHtml(cfg.hint)}</div>
+    </div>`;
+  }).join('');
+  $$('#apiList .api-test').forEach(b=>b.addEventListener('click',()=>runProbe(b.dataset.target)));
+}
+
+/* 两级配置文件的实际路径与是否已创建，方便同学确认自己改的是哪个文件 */
+function renderApiPaths(paths){
+  const box=$('#apiPaths'); if(!box) return;
+  if(!paths){box.innerHTML='';return;}
+  const row=(label,value,exists,createTip)=>{
+    return `<li class="${exists?'':'off'}">
+      <span>${escapeHtml(label)}</span>
+      <code>${escapeHtml(value||'')}</code>
+      <span class="flag">${exists?'已创建':'未创建'}</span>
+      ${exists?'':`<span class="muted" style="font-size:11.5px">${escapeHtml(createTip)}</span>`}
+    </li>`;
+  };
+  box.innerHTML=row('项目配置',paths.project,paths.projectExists,'双击「打开配置文件.cmd」生成')
+    +row('用户配置（可选）',paths.user,paths.userExists,'双击「设置密钥.cmd」生成');
+}
+
+async function loadHealth(){
+  const note=$('#apiNote');
+  try{
+    const res=await fetch('/api/health',{cache:'no-store'});
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.error||'读取失败');
+    apiHealthData=data;
+    const server=data.server||{};
+    const applied=server.configApplied||[];
+    const projectFile=(server.configPaths||{}).project||'';
+    if(note){
+      note.innerHTML=(applied.length
+        ? '已读取 <b>'+applied.length+'</b> 项凭据'
+        : '未读取到凭据，页面将以演示数据运行')
+        +(projectFile
+          ? ' · <span class="muted">优先级：环境变量 &gt; 项目配置 &gt; 用户配置</span>'
+          : ' · <span class="muted">'+escapeHtml(server.configPath||'')+'</span>');
+    }
+    renderApiPaths(server.configPaths||null);
+    renderApiList();
+  }catch(err){
+    apiHealthData={providers:{}};
+    if(note) note.textContent='无法读取配置状态：'+((err&&err.message)||'网络异常');
+    renderApiList();
+  }
+}
+
+async function runProbe(target){
+  apiState[target]={status:'loading'};
+  renderApiList();
+  try{
+    const res=await fetch('/api/health/probe',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({target:target})});
+    const data=await res.json();
+    if(!data.ok||!data.result) throw new Error(data.error||'检测失败');
+    apiState[target]={status:'done',result:data.result};
+  }catch(err){
+    apiState[target]={status:'done',result:{ok:false,ms:0,detail:(err&&err.message)||'检测失败'}};
+  }
+  renderApiList();
+}
+
+async function runAllProbes(){
+  const btn=$('#healthAllBtn');
+  if(btn){btn.disabled=true;btn.textContent='检测中…';}
+  try{
+    for(const cfg of API_ORDER){ await runProbe(cfg.key); }
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='全部检测';}
+  }
+}
+
+if($('#healthAllBtn')) $('#healthAllBtn').addEventListener('click',runAllProbes);
+if($('#healthRefreshBtn')) $('#healthRefreshBtn').addEventListener('click',()=>{apiState={};loadHealth();});
+if($('#srcPanel')){
+  const gotoApi=()=>showScreen('settings');
+  $('#srcPanel').addEventListener('click',gotoApi);
+  $('#srcPanel').addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();gotoApi();}
+  });
+}
+
 loadLiveNews();
 </script>
+
 </body>
 </html>

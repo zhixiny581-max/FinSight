@@ -17,6 +17,22 @@ FinSight 将财经新闻整理为事件判断、宏观或行业传导、相关�
 
 [财讯智析课程展示站](https://mf12.show.lingnan.top/core) 使用 [Python 部署版](deploy/show-v2/README.md)。展示页保留快讯、智能分析、相关公司和行情，开发交接和标注入口已移除。复现线上版本时，按部署说明配置服务器环境变量。
 
+### 展示版的密钥放哪
+
+展示版（`deploy/show-v2`）不用 `.env`，改成两份可选文件，读到一个就停：
+
+| 优先级 | 文件 | 场景 |
+| --- | --- | --- |
+| 1 | 系统环境变量 | 线上服务器注入 |
+| 2 | `deploy/show-v2/api-config.json` | **展示机、同学本地部署**（项目内，随文件夹拷走） |
+| 3 | `~/.finsight/config.json` | 跨项目复用（项目外，不会随仓库分发） |
+
+课堂展示机：双击 `deploy/show-v2/打开配置文件.cmd` 填好 `api-config.json`，整个文件夹拷到展示电脑即可直接用。
+
+同学本地部署：同样双击这个文件，从空模板 `api-config.example.json` 生成，按提示填写后重启服务，再进页面「工具 → 接口设置」点「全部检测」。
+
+`api-config.json` 不进 Git、不进上传包（`.gitignore` 与打包脚本双重拦截，打包前还会扫描其中的真实值是否泄漏到其他文件）。只有空模板 `api-config.example.json` 会提交。完整步骤、字段表和排查方法见 [接口配置说明](docs/接口配置说明.md)。
+
 ## 环境与首次配置
 
 双版本启动器及新版需要 **Node.js 22 或以上**。核心运行与基础测试只使用 Node.js 自带模块，不需要安装 npm 依赖，也不要求安装 Codex 或 iFinD Skill。
@@ -123,7 +139,7 @@ node tools/prepare-release.cjs --check
 
 ## 安全上传 GitHub
 
-**真实密钥只放本机 `.env`，不要上传 `.env`、`mcp_config.json`、`data/`、日志、运行审计或个人导入记录。** `.env.example` 是空模板，可上传。
+**真实密钥只放本机 `.env` 和 `deploy/show-v2/api-config.json`，不要上传 `.env`、`api-config.json`、`mcp_config.json`、`data/`、日志、运行审计或个人导入记录。** `.env.example` 与 `api-config.example.json` 是空模板，可上传。
 
 推荐双击根目录 `打包上传GitHub.cmd`，或运行：
 

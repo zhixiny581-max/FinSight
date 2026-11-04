@@ -1459,6 +1459,8 @@ class Handler(BaseHTTPRequestHandler):
                                             "reason": "IFIND_UNREACHABLE"})
             if method == "GET" and path == "/api/stock-kline":
                 return self.api_stock_kline(query)
+            if method == "GET" and path == "/api/rank":
+                return self.api_rank(query)
             if method != "GET":
                 return self.send_json(405, {"ok": False, "error": "只支持 GET 请求"})
             if path in ("/", "/index.html", "/core", "/index-core.html"):
@@ -1505,6 +1507,35 @@ class Handler(BaseHTTPRequestHandler):
                 "baseUrl": DEEPSEEK_BASE_URL,
             },
         })
+
+    # --- A 股人气榜（东方财富，服务端代理） ---
+    def api_rank(self, query):
+        limit_text = query.get("limit", ["20"])[0]
+        try:
+            limit = max(1, min(int(limit_text), 50))
+        except (TypeError, ValueError):
+            limit = 20
+        try:
+            import popularity
+            payload = popularity.fetch_rank(limit)
+        except Exception as error:  # noqa: BLE001
+            code = getattr(error, "code", "RANK_FAILED")
+            detail = getattr(error, "detail", "")
+            messages = {
+                "RANK_TIMEOUT": "东方财富接口响应超时，请稍后重试。",
+                "RANK_UNREACHABLE": "无法连接东方财富接口，请检查服务器网络。",
+                "RANK_HTTP": "东方财富接口返回异常状态。",
+                "RANK_PARSE": "东方财富接口返回内容无法解析。",
+                "RANK_REJECTED": "东方财富接口拒绝了本次请求。",
+                "RANK_EMPTY": "东方财富返回的榜单为空。",
+            }
+            return self.send_json(200, {
+                "ok": False, "reason": code, "detail": detail,
+                "error": messages.get(code, "暂时无法获取人气榜。"),
+                "source": "东方财富 A 股人气榜",
+                "sourceUrl": "https://guba.eastmoney.com/rank/",
+            })
+        self.send_json(200, payload)
 
     # --- news ---
     def api_news(self, query):

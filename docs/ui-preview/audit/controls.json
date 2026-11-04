@@ -1,0 +1,11 @@
+{
+  "clearBtn": "{\"exists\":true,\"before\":\"abc测试\",\"after\":\"\",\"cleared\":true}",
+  "tagBtn": "{\"disabled\":false,\"title\":\"\",\"ariaDisabled\":null,\"rows\":1,\"rowText\":\"还没有导入记录\"}",
+  "anaButtons": "{\"anaRun\":{\"disabled\":true,\"title\":\"\",\"ariaDisabled\":null,\"cursor\":\"not-allowed\"},\"aiRunInline\":{\"disabled\":true,\"title\":\"\",\"cursor\":\"not-allowed\"},\"aiStatus\":\"当前是示例数据，请先通过 http://127.0.0.1:3000 打开网站。\"}",
+  "dateFilter": "{\"panelOpen\":true,\"clicked\":\"6\",\"before\":6,\"after\":6,\"dateBtnText\":\"全部日期 ▾\",\"panelClosedAfter\":false}",
+  "a11y": "{\"fav\":{\"ariaPressed\":null,\"ariaLabel\":null,\"title\":\"加入收藏\"},\"themeBtn\":{\"ariaLabel\":null,\"title\":\"切换深浅色\"},\"cloudToggle\":{\"ariaPressed\":null},\"favFilterBtn\":{\"ariaPressed\":null},\"navItemAriaCurrent\":[null,null,null,null]}",
+  "filterbar": "{\"buttonsInside\":[\"全部日期 ▾\",\"‹\",\"›\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\",\"10\",\"11\",\"12\",\"13\",\"14\",\"15\",\"16\",\"17\"],\"hasReset\":false,\"hasChips\":false,\"text\":\"日期\\n全部日期 ▾\\n2026 年 11 月\\n‹\\n›\\n日\\n一\\n二\\n三\\n四\\n五\\n六\\n1\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\n12\\n13\\n14\\n15\\n16\\n17\\n18\\n19\\n20\\n21\\n22\\n23\\n24\\n25\\n26\\n27\\n28\\n29\\n30\"}",
+  "importRow": "{\"text\":\"还没有导入记录\",\"buttons\":0,\"cursor\":\"pointer\"}",
+  "darkHardcode": "{\"theme\":\"dark\",\"validationStatus\":\"element-absent\"}",
+  "scroll": "{\"scrolledTo\":701,\"afterSwitchToAnalysis\":0,\"backToFeed\":0,\"remembersPosition\":false}"
+}
