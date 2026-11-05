@@ -902,6 +902,59 @@ table.tbl th{color:var(--ink-2)}
 /* ---- 15. 人气榜元信息单行，避免尾部折成孤字 ---- */
 .rank-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* ---- 24. 移动端兼容：右栏单列置后、筛选条压缩、标签条减负 ----
+   1240px 那条断点把右栏 order:-1 并排成两列，是给平板和窄桌面用的。
+   到 390px 宽时日历和人气榜被挤成左右两栏，证券名、更新时间全被截断，
+   而且右栏置顶把新闻挤到第二屏——手机首屏应该是新闻，不是侧栏卡。
+   所以这里退回单列、取消 order，顺带把筛选区从四行压到三行。 */
+@media(max-width:820px){
+  .feed-grid>.rail-col{order:0;display:flex;flex-direction:column;gap:12px;align-items:stretch}
+  /* 单列后两张卡要等宽：flex 子项默认不拉满，日期格子只剩 25px 宽 */
+  .feed-grid>.rail-col>*{width:100%}
+  /* 单列后宽度够了，把 1240px 里为省高度隐藏的图例和格子尺寸放回来 */
+  .rail-cal .cal-legend{display:flex}
+  .rail-cal .cal-d{height:34px;font-size:12.5px}
+
+  .filterbar{padding:9px 12px;gap:7px}
+  .filterbar>label{display:none}                 /* 「日期」「信息重要度」两个说明文字最占宽 */
+  .filterbar .seg button{min-height:34px;padding:0 10px}
+  .filterbar .btn.sm{min-height:34px}
+  .filterbar .select{height:34px}
+  .fb-stats{width:100%;margin:2px 0 0;padding:6px 0 0;border-left:0;
+    border-top:1px solid var(--border);justify-content:space-between;gap:8px}
+
+  .news{grid-template-columns:46px minmax(0,1fr);gap:10px;padding:12px 12px}
+  .news .time{padding-left:11px}
+  .cal-nav button{width:34px;height:34px}       /* 26px 的月切换按钮在手指上太难按 */
+
+  /* 表格：fixed 布局 + 百分比列宽在 390px 里会把 7 列压成一条条竖缝，
+     改成按内容分配并在 .tblwrap 里横向滚动；只有标题列允许换行。 */
+  .tblwrap table.tbl{table-layout:auto;min-width:620px}
+  /* 空表时不要 620px 的横向滚动：居中的「还没有记录」会被裁到屏幕外。
+     光设 min-width:0 不够，表头七列本身就撑到 392px，所以空表连表头一起收起。 */
+  .tblwrap:has(tr.empty-row) table.tbl{min-width:0}
+  .tblwrap:has(tr.empty-row) table.tbl thead{display:none}
+  .tblwrap table.tbl th:nth-child(n){width:auto}
+  .tblwrap table.tbl th,.tblwrap table.tbl td{white-space:nowrap}
+  .tblwrap table.tbl th:first-child,.tblwrap table.tbl td:first-child{
+    white-space:normal;max-width:190px}
+}
+
+/* 五个导航标签在 390px 里塞不下就得横滑，去掉图标后能一屏放完 */
+@media(max-width:760px){
+  .sidebar{gap:0}
+  .nav-item{padding:8px 7px;font-size:12.5px;gap:5px}
+  .nav-item .ico{display:none}
+  .nav-item .badge{margin-left:3px;font-size:10.5px;padding:0 5px}
+}
+
+/* 360px 一类小屏（安卓常见）再收一档，否则「接口设置」会被挤出屏幕 */
+@media(max-width:400px){
+  .sidebar{padding:6px 8px}
+  .nav-item{padding:8px 6px;font-size:12px;gap:4px}
+  .nav-item .badge{font-size:10px;padding:0 4px;margin-left:2px}
+}
+
 </style>
 </head>
 <body>

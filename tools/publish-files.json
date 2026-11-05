@@ -102,5 +102,7 @@
   "deploy/show-v2/open_config.py",
   "deploy/show-v2/打开配置文件.cmd",
   "docs/接口配置说明.md",
-  "docs/交接与待办-20261105.md"
+  "docs/交接与待办-20261105.md",
+  "docs/移动端适配说明.md",
+  "tools/ui-mobile.cjs"
 ]
