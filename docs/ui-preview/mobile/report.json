@@ -1,0 +1,346 @@
+{
+  "url": "http://127.0.0.1:8799",
+  "viewport": {
+    "width": 1280,
+    "height": 844
+  },
+  "screens": {
+    "feed": {
+      "vw": 1280,
+      "sw": 1280,
+      "bh": 1774,
+      "overflow": 0,
+      "offenders": [
+        {
+          "sel": "aside#drawer.drawer",
+          "over": 869,
+          "w": 860,
+          "text": "——\n      \n      日 K · 前复"
+        }
+      ],
+      "smallTargets": [
+        {
+          "sel": "button#feedRefreshBtn",
+          "w": 88,
+          "h": 28,
+          "text": "⟳ 手动刷新"
+        },
+        {
+          "sel": "button#dateBtn",
+          "w": 87,
+          "h": 28,
+          "text": "全部日期 ▾"
+        },
+        {
+          "sel": "button",
+          "w": 43,
+          "h": 28,
+          "text": "全部"
+        },
+        {
+          "sel": "button",
+          "w": 35,
+          "h": 28,
+          "text": "★1"
+        },
+        {
+          "sel": "button",
+          "w": 35,
+          "h": 28,
+          "text": "★2"
+        },
+        {
+          "sel": "button",
+          "w": 35,
+          "h": 28,
+          "text": "★3"
+        },
+        {
+          "sel": "button",
+          "w": 35,
+          "h": 28,
+          "text": "★4"
+        },
+        {
+          "sel": "button",
+          "w": 35,
+          "h": 28,
+          "text": "★5"
+        },
+        {
+          "sel": "button#favFilterBtn",
+          "w": 86,
+          "h": 28,
+          "text": "★ 仅看收藏"
+        },
+        {
+          "sel": "span",
+          "w": 78,
+          "h": 23,
+          "text": "华尔街见闻"
+        },
+        {
+          "sel": "span",
+          "w": 65,
+          "h": 23,
+          "text": "# 行业级"
+        },
+        {
+          "sel": "span",
+          "w": 78,
+          "h": 23,
+          "text": "华尔街见闻"
+        }
+      ],
+      "smallCount": 26
+    },
+    "analysis": {
+      "vw": 1280,
+      "sw": 1280,
+      "bh": 1458,
+      "overflow": 0,
+      "offenders": [
+        {
+          "sel": "aside#drawer.drawer",
+          "over": 869,
+          "w": 860,
+          "text": "——\n      \n      日 K · 前复"
+        }
+      ],
+      "smallTargets": [
+        {
+          "sel": "button#backToFeed",
+          "w": 101,
+          "h": 28,
+          "text": "← 返回快讯流"
+        },
+        {
+          "sel": "button#anaRun",
+          "w": 92,
+          "h": 28,
+          "text": "开始 AI 分析"
+        },
+        {
+          "sel": "span#docSrc",
+          "w": 78,
+          "h": 23,
+          "text": "华尔街见闻"
+        },
+        {
+          "sel": "button#aiRunInline",
+          "w": 93,
+          "h": 28,
+          "text": "开始 AI 分析"
+        },
+        {
+          "sel": "a#docLink",
+          "w": 66,
+          "h": 19,
+          "text": "打开原文 ↗"
+        },
+        {
+          "sel": "span#vdDir",
+          "w": 91,
+          "h": 23,
+          "text": "— 待 AI 判断"
+        },
+        {
+          "sel": "span#scopeLevel",
+          "w": 95,
+          "h": 23,
+          "text": "— 待判断范围"
+        },
+        {
+          "sel": "span#macroGate",
+          "w": 119,
+          "h": 23,
+          "text": "— 宏观门槛待判断"
+        },
+        {
+          "sel": "span#macroPricingState",
+          "w": 131,
+          "h": 23,
+          "text": "— 尚未判断提前定价"
+        },
+        {
+          "sel": "button#marketLatest",
+          "w": 72,
+          "h": 28,
+          "text": "最新行情"
+        },
+        {
+          "sel": "button#marketPreEvent",
+          "w": 85,
+          "h": 28,
+          "text": "新闻前行情"
+        },
+        {
+          "sel": "button#marketRefresh",
+          "w": 72,
+          "h": 28,
+          "text": "刷新行情"
+        }
+      ],
+      "smallCount": 14
+    },
+    "import": {
+      "vw": 1280,
+      "sw": 1280,
+      "bh": 913,
+      "overflow": 0,
+      "offenders": [
+        {
+          "sel": "aside#drawer.drawer",
+          "over": 869,
+          "w": 860,
+          "text": "——\n      \n      日 K · 前复"
+        }
+      ],
+      "smallTargets": [
+        {
+          "sel": "button#importTagBtn",
+          "w": 85,
+          "h": 28,
+          "text": "暂无待打标"
+        },
+        {
+          "sel": "button#importBtn",
+          "w": 85,
+          "h": 28,
+          "text": "解析并入库"
+        },
+        {
+          "sel": "button#importClearBtn",
+          "w": 47,
+          "h": 28,
+          "text": "清空"
+        },
+        {
+          "sel": "span#kChg",
+          "w": 31,
+          "h": 23,
+          "text": "—"
+        },
+        {
+          "sel": "span#kPricingState",
+          "w": 71,
+          "h": 23,
+          "text": "— 待判断"
+        }
+      ],
+      "smallCount": 5
+    },
+    "calendar": {
+      "vw": 1280,
+      "sw": 1280,
+      "bh": 1264,
+      "overflow": 0,
+      "offenders": [
+        {
+          "sel": "aside#drawer.drawer",
+          "over": 869,
+          "w": 860,
+          "text": "——\n      \n      日 K · 前复"
+        }
+      ],
+      "smallTargets": [
+        {
+          "sel": "button#calToday",
+          "w": 72,
+          "h": 28,
+          "text": "回到本月"
+        },
+        {
+          "sel": "button#calPrev",
+          "w": 26,
+          "h": 26,
+          "text": "‹"
+        },
+        {
+          "sel": "button#calNextBtn",
+          "w": 26,
+          "h": 26,
+          "text": "›"
+        },
+        {
+          "sel": "span#kChg",
+          "w": 31,
+          "h": 23,
+          "text": "—"
+        },
+        {
+          "sel": "span#kPricingState",
+          "w": 71,
+          "h": 23,
+          "text": "— 待判断"
+        }
+      ],
+      "smallCount": 5
+    },
+    "settings": {
+      "vw": 1280,
+      "sw": 1280,
+      "bh": 982,
+      "overflow": 0,
+      "offenders": [
+        {
+          "sel": "aside#drawer.drawer",
+          "over": 869,
+          "w": 860,
+          "text": "——\n      \n      日 K · 前复"
+        }
+      ],
+      "smallTargets": [
+        {
+          "sel": "button#healthAllBtn",
+          "w": 72,
+          "h": 28,
+          "text": "全部检测"
+        },
+        {
+          "sel": "button#healthRefreshBtn",
+          "w": 72,
+          "h": 28,
+          "text": "刷新状态"
+        },
+        {
+          "sel": "button",
+          "w": 47,
+          "h": 28,
+          "text": "检测"
+        },
+        {
+          "sel": "button",
+          "w": 47,
+          "h": 28,
+          "text": "检测"
+        },
+        {
+          "sel": "button",
+          "w": 47,
+          "h": 28,
+          "text": "检测"
+        },
+        {
+          "sel": "button",
+          "w": 47,
+          "h": 28,
+          "text": "检测"
+        },
+        {
+          "sel": "span#kChg",
+          "w": 31,
+          "h": 23,
+          "text": "—"
+        },
+        {
+          "sel": "span#kPricingState",
+          "w": 71,
+          "h": 23,
+          "text": "— 待判断"
+        }
+      ],
+      "smallCount": 8
+    }
+  }
+}

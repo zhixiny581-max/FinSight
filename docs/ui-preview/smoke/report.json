@@ -1,0 +1,817 @@
+{
+  "base": "http://127.0.0.1:8765",
+  "edge": "CDP 9224",
+  "generatedAt": "2026-11-04T12:24:54.901Z",
+  "totalErrors": 2,
+  "errors": [
+    {
+      "type": "http",
+      "status": 400,
+      "url": "http://127.0.0.1:8765/api/imports"
+    },
+    {
+      "type": "log",
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://127.0.0.1:8765/api/imports"
+    }
+  ],
+  "steps": [
+    {
+      "name": "00-initial",
+      "state": {
+        "screen": "s-feed",
+        "feed": 6,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": "00-initial.png"
+    },
+    {
+      "name": "01-dark-mode",
+      "state": {
+        "screen": "s-feed",
+        "feed": 6,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "dark",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": "01-dark-mode.png"
+    },
+    {
+      "name": "02-light-mode",
+      "state": {
+        "screen": "s-feed",
+        "feed": 6,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "03-search-policy",
+      "state": {
+        "screen": "s-feed",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "04-search-clear",
+      "state": {
+        "screen": "s-feed",
+        "feed": 6,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "05-star5-filter",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "06-star-all",
+      "state": {
+        "screen": "s-feed",
+        "feed": 6,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "07-date-pop",
+      "state": {
+        "screen": "s-feed",
+        "feed": 6,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "pop": true,
+        "popDays": 32
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "08-tag-macro",
+      "state": {
+        "screen": "s-feed",
+        "feed": 4,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "09-fav-only",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "10-sort-stars",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "11-cloud-table",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "cloud": "宏观级 宏观级14行业级 行业级12公司级 公司级8混合级 混合级6"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "12-manual-refresh",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "13-open-analysis",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "docTitle": "国家发改委：加快推进新型储能规模化应用，力争 2027 年全国新型储能装机规模达到 1.8 亿千瓦以上",
+        "aiStatus": "当前为示例数据；接入数据服务后即可发起 AI 分析。"
+      },
+      "newErrors": [],
+      "screenshot": "13-open-analysis.png"
+    },
+    {
+      "name": "14-run-ai",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "aiStatus": "当前为示例数据；接入数据服务后即可发起 AI 分析。",
+        "marketNote": "展示最新可取得的60个交易日日K，观察市场后续表现；全A涨跌不等于这条新闻造成的涨跌。 新闻发布时间：2026-09-18 09:12。"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "15-market-pre-event",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "marketNote": "仅展示新闻发布前可使用的日线，与事前分析口径一致。 新闻发布时间：2026-09-18 09:12。",
+        "dataNote": "数据源：iFinD index_data"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "16-market-refresh",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "17-chain-expand",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "modal": true,
+        "aria": "true"
+      },
+      "newErrors": [],
+      "screenshot": "17-chain-expand.png"
+    },
+    {
+      "name": "18-chain-close",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "modal": false
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "19-stock-filter",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "stockRows": 1,
+        "count": "显示 0 / 7 只"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "20-open-import",
+      "state": {
+        "screen": "s-import",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "impRows": 1,
+        "impStatus": "入库后状态为“待打标”，需确认标签与信息重要度"
+      },
+      "newErrors": [],
+      "screenshot": "20-open-import.png"
+    },
+    {
+      "name": "21-import-submit",
+      "state": {
+        "screen": "s-import",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "impStatus": "入库后状态为“待打标”，需确认标签与信息重要度"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "22-import-click",
+      "state": {
+        "screen": "s-import",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "impStatus": "不能抓取本地地址或内网地址。",
+        "impRows": 1
+      },
+      "newErrors": [
+        "HTTP 400 /api/imports",
+        "log: Failed to load resource: the server responded with a status of 400 (Bad Request)"
+      ],
+      "screenshot": null
+    },
+    {
+      "name": "23-import-tag-modal",
+      "state": {
+        "screen": "s-import",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "modal": false,
+        "modalTitle": "—"
+      },
+      "newErrors": [],
+      "screenshot": "23-import-tag-modal.png"
+    },
+    {
+      "name": "24-import-modal-close",
+      "state": {
+        "screen": "s-import",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "modal": false
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "25-open-calendar",
+      "state": {
+        "screen": "s-calendar",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "calTitle": "2026 年 11 月",
+        "openN": "21",
+        "closedN": "9",
+        "calNext": "11-05",
+        "days": 30,
+        "holidays": 7
+      },
+      "newErrors": [],
+      "screenshot": "25-open-calendar.png"
+    },
+    {
+      "name": "26-cal-prev",
+      "state": {
+        "screen": "s-calendar",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "calTitle": "2026 年 10 月"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "27-cal-today",
+      "state": {
+        "screen": "s-calendar",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "calTitle": "2026 年 11 月"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "28-back-feed",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "30-empty-state",
+      "state": {
+        "screen": "s-feed",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "emptyCard": "还没有收藏任何快讯，点卡片右上角的 ☆ 加入收藏"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "31-search-reset",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "32-click-news-card",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "docTitle": "国家发改委：加快推进新型储能规模化应用，力争 2027 年全国新型储能装机规模达到 1.8 亿千瓦以上"
+      },
+      "newErrors": [],
+      "screenshot": "32-click-news-card.png"
+    },
+    {
+      "name": "33-ai-run-feedback",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "aiStatus": "当前为示例数据；接入数据服务后即可发起 AI 分析。"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "34-stock-row-click",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "drawer": false,
+        "kSub": "日 K · 前复权 · 示例数据"
+      },
+      "newErrors": [],
+      "screenshot": "34-stock-row-click.png"
+    },
+    {
+      "name": "35-back-feed-2",
+      "state": {
+        "screen": "s-feed",
+        "feed": 1,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "36-fav-toggle",
+      "state": {
+        "screen": "s-feed",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "favCount": "0"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "37-hotrow-click",
+      "state": {
+        "screen": "s-analysis",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "docTitle": "国家发改委：加快推进新型储能规模化应用，力争 2027 年全国新型储能装机规模达到 1.8 亿千瓦以上"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "38-import-tag-status",
+      "state": {
+        "screen": "s-import",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "39-import-tag-click",
+      "state": {
+        "screen": "s-import",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "impStatus": "不能抓取本地地址或内网地址。",
+        "modal": false
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "40-calendar-day",
+      "state": {
+        "screen": "s-calendar",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "41-cal-day-select",
+      "state": {
+        "screen": "s-calendar",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "light",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "calTitle": "2026 年 11 月"
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "42-theme-persist",
+      "state": {
+        "screen": "s-calendar",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "dark",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440,
+        "savedTheme": null,
+        "lsKeys": [
+          "fs.filters",
+          "fs.theme",
+          "fs.fav"
+        ]
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "43-final-feed",
+      "state": {
+        "screen": "s-feed",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "dark",
+        "bad": [],
+        "vw": 1440,
+        "sw": 1440
+      },
+      "newErrors": [],
+      "screenshot": null
+    },
+    {
+      "name": "29-mobile-390",
+      "state": {
+        "screen": "s-feed",
+        "feed": 0,
+        "desc": "暂时无法连接 iFinD，当前显示示例数据。",
+        "mode": "● 示例数据",
+        "weekNote": "本年度已无剩余调休上班日。",
+        "hot": 5,
+        "theme": "dark",
+        "bad": [],
+        "vw": 390,
+        "sw": 390
+      },
+      "newErrors": [],
+      "screenshot": "29-mobile-390.png"
+    }
+  ]
+}
