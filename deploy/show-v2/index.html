@@ -803,7 +803,6 @@ html[data-theme="dark"] .cal-d.m-weekend{background:var(--surface-3);color:var(-
     grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px;position:static;align-items:start}
   .rail-cal .cal-legend{display:none}
   .rail-cal .cal-d{height:28px;font-size:11px}
-  .ranklist .rankrow:nth-child(n+7){display:none}
   .fb-stats{width:auto;margin-left:auto;padding-left:12px;
     border-left:1px solid var(--border);gap:10px;justify-content:flex-end}
 }
@@ -1002,7 +1001,7 @@ table.tbl th{color:var(--ink-2)}
       <div class="page-head">
         <div>
           <h1>快讯流</h1>
-          <div class="desc" id="feedDesc">iFinD 财经新闻 · 最近7天（含今天）· AI按需分析 · 正在读取最新新闻</div>
+          <div class="desc" id="feedDesc">正在读取上次保存的快讯…</div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn sm" id="feedRefreshBtn">⟳ 手动刷新</button>
@@ -1081,6 +1080,7 @@ table.tbl th{color:var(--ink-2)}
               <button class="btn sm rank-refresh" id="rankRefreshBtn" type="button" title="重新抓取最新人气榜">⟳ 更新</button>
             </div>
             <div class="rank-meta" id="rankMeta">正在获取…</div>
+            <div class="rank-meta" id="rankQuoteMeta" style="white-space:normal" hidden></div>
             <div class="ranklist" id="rankList"></div>
             <a class="rank-src" href="https://guba.eastmoney.com/rank/" target="_blank" rel="noopener"
                title="在新标签页打开东方财富个股人气榜">东方财富个股人气榜 ↗</a>
@@ -1312,30 +1312,12 @@ table.tbl th{color:var(--ink-2)}
       <div class="page-head">
         <div>
           <h1>接口设置</h1>
-          <div class="desc">密钥放在本地配置文件里，<b>不进 Git、页面不显示明文</b>；展示机用项目内配置，同学本地部署复制模板填写</div>
+          <div class="desc">查看新闻、分析和行情的数据源配置状态</div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn sm primary" id="healthAllBtn">全部检测</button>
-          <button class="btn sm" id="healthRefreshBtn">刷新状态</button>
-        </div>
+        <button class="btn sm" id="healthRefreshBtn" type="button">刷新状态</button>
       </div>
-
-      <div class="api-note" id="apiNote">正在读取本机配置…</div>
+      <div class="api-note" id="apiNote" aria-live="polite">正在读取接口状态…</div>
       <div id="apiList"></div>
-
-      <div class="card api-foot">
-        <div class="sec-title">如何填写密钥</div>
-        <ol class="api-steps">
-          <li><b>本机部署（推荐）</b>：双击 <code>打开配置文件.cmd</code>，会自动生成并打开 <code>api-config.json</code>，填好后保存</li>
-          <li><b>跨项目复用</b>：双击 <code>设置密钥.cmd</code>，逐项粘贴（写入用户目录，优先级低于项目配置）</li>
-          <li>重新双击 <code>启动展示站.cmd</code>，回到本页点「全部检测」确认连通</li>
-        </ol>
-        <ul class="api-paths" id="apiPaths"></ul>
-        <div class="muted api-foot-note">
-          网页不提供写入能力：公网部署时即使有人打开本页，也无法修改或读取你的密钥。
-          <code>api-config.json</code> 已被 .gitignore 忽略，也不会打进上传包。
-        </div>
-      </div>
     </section>
 
   <!-- ================= 开市日历 ================= -->
@@ -2140,64 +2122,95 @@ function mergeProgressiveNews(current,incoming){
 }
 async function loadLiveNews(manual=false){
   const button=$('#feedRefreshBtn');
-  const hadLive=dataMode==='live' && NEWS.some(item=>item.live);
+  const desc=$('#feedDesc');
   syncTodayState();
-  const dates=recentCalendarDates(7);
   const loadSequence=++liveNewsLoadSequence;
   if(liveNewsController) liveNewsController.abort();
   const controller=new AbortController();
+  const signal=controller.signal;
   liveNewsController=controller;
-  if(manual && button){ button.disabled=true; button.textContent='⟳ 正在刷新…'; }
-  // 手动刷新只更新数据，不清空用户正在使用的筛选条件（保留阅读上下文）
-  if(manual) $('#datePanel').classList.remove('on');
-  let accumulated=[],successfulDays=0,cacheDays=0,manualCount=0,requeuedCount=0;
   const failedDates=[];
-  for(let index=0;index<dates.length;index+=1){
-    if(loadSequence!==liveNewsLoadSequence) return;
-    const date=dates[index];
-    if($('#feedDesc')) $('#feedDesc').textContent=`正在处理 ${date} 新闻（${index+1}/7）· 已展示 ${accumulated.length} 条`;
-    const params=new URLSearchParams({date});
-    if(index===0) params.set('include_imports','1');
-    if(manual&&index===0) params.set('refresh_feed','1');
-    try{
-      const response=await fetch(`/api/news?${params.toString()}`,{cache:'no-store',signal:controller.signal});
-      const payload=await response.json();
-      manualCount+=Number(payload.manual_import_count)||0;
-      requeuedCount+=Number(payload.requeued_import_count)||0;
-      if(!response.ok||!['live','cache','import_only'].includes(payload.mode)||!Array.isArray(payload.items)) throw new Error('live_news_unavailable');
-      successfulDays+=1;
-      if(payload.mode!=='live') cacheDays+=1;
-      accumulated=mergeProgressiveNews(accumulated,payload.items);
-      NEWS.splice(0,NEWS.length,...accumulated.map(mapLiveNews));
-      NEWS.forEach(n=>{const result=analysisResults.get(n.id);if(result)applyAnalysisToNews(n,result);});
-      if(successfulDays===1) state.favorites.clear();
-      dataMode='live'; updateLiveSourceUI(true); syncTagOptions(); renderFeed();
-      if(cacheDays){
-        if($('#dataModeTag')) $('#dataModeTag').textContent='● iFinD 新闻（含缓存或导入）· AI按需分析';
-        if($('#ifindNewsSource')) $('#ifindNewsSource').textContent='iFinD · 含缓存或导入';
-      }
-      renderMarketBits(); renderMarketCal();
-      if($('#datePanel').classList.contains('on')) renderDatePanel();
-    }catch(error){
-      if(error&&error.name==='AbortError') return;
-      failedDates.push(date);
+  async function readSnapshot(){
+    const response=await fetch('/api/news?snapshot=1&include_imports=1',{cache:'no-store',signal});
+    const payload=await response.json();
+    if(!response.ok||!payload.ok||payload.mode!=='snapshot'||!Array.isArray(payload.items)){
+      throw new Error('saved_news_unavailable');
     }
+    return payload;
   }
   try{
-    if(!successfulDays) throw new Error('live_news_unavailable');
-    const sourceNote=(manualCount?`人工导入 ${manualCount} 条`:'AI摘要与质量筛选已完成')+(cacheDays?` · ${cacheDays}天含缓存或导入，不代表实时刷新`:'');
-    const requeuedNote=requeuedCount?` · ${requeuedCount} 条人工导入已移回待重新打标`:'';
-    const failedNote=failedDates.length?` · ${failedDates.length}天读取失败`:'';
-    if($('#feedDesc')) $('#feedDesc').textContent=`财经新闻 · ${dates[6]} 至 ${dates[0]} · ${sourceNote} · 共 ${accumulated.length} 条${failedNote}${requeuedNote} · 已更新 ${new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date())}`;
-    if(manual&&requeuedCount) await loadImports();
-    if(activeNewsId&&NEWS.some(n=>n.id===activeNewsId)) openAnalysis(activeNewsId);
+    let payload;
+    if(manual){
+      button.disabled=true;
+      button.textContent='⟳ 正在刷新…';
+      $('#datePanel').classList.remove('on');
+      payload=await readSnapshot();
+      if(signal.aborted) return;
+      const lastDay=payload.date_range?.end||'';
+      const dates=recentCalendarDates(7).filter(date=>date>=lastDay).reverse();
+      for(const [index,date] of dates.entries()){
+        desc.textContent=`正在刷新 ${date}（${index+1}/${dates.length}） · 当前保留上次列表`;
+        const params=new URLSearchParams({date,refresh_feed:'1'});
+        try{
+          const response=await fetch(`/api/news?${params}`,{cache:'no-store',signal});
+          const result=await response.json();
+          if(!response.ok||!result.ok||result.fallback_reason) throw new Error('news_refresh_unavailable');
+        }catch(error){
+          if(signal.aborted) return;
+          if(date>lastDay){
+            // Leave the first missing date eligible for the next refresh.
+            failedDates.push(...dates.slice(index));
+            break;
+          }
+          failedDates.push(date);
+        }
+      }
+      if(dates.length) payload=await readSnapshot();
+    }else{
+      desc.textContent='正在读取上次保存的快讯…';
+      if(dataMode!=='live') $('#feedList').replaceChildren();
+      payload=await readSnapshot();
+    }
+    if(signal.aborted) return;
+    const items=mergeProgressiveNews([],payload.items);
+    NEWS.splice(0,NEWS.length,...items.map(mapLiveNews));
+    NEWS.forEach(item=>{
+      const result=analysisResults.get(item.id);
+      if(result) applyAnalysisToNews(item,result);
+    });
+    dataMode='live';
+    updateLiveSourceUI(true);
+    $('#dataModeTag').textContent='● 已保存快讯 · AI按需分析';
+    $('#ifindNewsSource').textContent='iFinD · 已保存快讯';
+    syncTagOptions();
+    renderFeed();
+    renderMarketBits();
+    renderMarketCal();
+    if($('#datePanel').classList.contains('on')) renderDatePanel();
+    const stamp=new Date(payload.retrieved_at);
+    const savedTime=Number.isNaN(stamp.getTime())?'':new Intl.DateTimeFormat('zh-CN',{
+      timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
+    }).format(stamp);
+    const range=payload.date_range;
+    const notice=failedDates.length?` · ${failedDates.length} 天刷新未完成，保留已有结果`:'';
+    if(savedTime||items.length){
+      desc.textContent=[savedTime?`上次取数 ${savedTime}`:'当前显示已导入新闻',
+        range?`${range.start} 至 ${range.end}`:'',`共 ${items.length} 条`].filter(Boolean).join(' · ')+notice;
+    }else{
+      desc.textContent='暂无已保存的快讯，点击「手动刷新」获取新闻。'+notice;
+    }
+    if(currentScreen==='analysis'&&NEWS.length){
+      openAnalysis(NEWS.some(item=>item.id===activeNewsId)?activeNewsId:NEWS[0].id);
+    }
   }catch(error){
-    if(!hadLive){ dataMode='mock'; updateLiveSourceUI(false); renderFeed(); }
-    if($('#feedDesc')) $('#feedDesc').textContent=hadLive?'刷新失败，当前仍保留上次 iFinD 新闻。':'暂时无法连接 iFinD，当前显示示例数据。';
+    if(signal.aborted) return;
+    desc.textContent='暂时无法读取已保存的快讯，请稍后再试。';
   }finally{
     if(loadSequence===liveNewsLoadSequence){
       liveNewsController=null;
-      if(button){ button.disabled=false; button.textContent='⟳ 手动刷新'; }
+      button.disabled=false;
+      button.textContent='⟳ 手动刷新';
     }
   }
 }
@@ -2395,8 +2408,9 @@ function renderRankRows(data){
     const chCls=(typeof ch==='number')?(ch>0?'up':ch<0?'down':''):'';
     const px=(typeof it.price==='number')?it.price.toFixed(2):'—';
     const nm=it.name||'—';
-    return `<div class="rankrow" title="${escapeHtml(nm)} ${escapeHtml(it.code)} · 第 ${it.rank} 名">
-      <span class="rk${it.rank<=3?' top':''}">${it.rank}</span>
+    const rank=Number.isInteger(it.rank)?it.rank:'—';
+    return `<div class="rankrow" title="${escapeHtml(nm)} ${escapeHtml(it.code)} · 第 ${rank} 名">
+      <span class="rk${rank<=3?' top':''}">${rank}</span>
       <span class="nm">${escapeHtml(nm)}<span class="cd">${escapeHtml(it.code)}</span></span>
       <span class="px"><span class="p">${px}</span><br><span class="ch ${chCls}">${chVal}</span></span>
     </div>`;
@@ -2404,13 +2418,25 @@ function renderRankRows(data){
 }
 function renderRankMeta(data){
   const meta=$('#rankMeta'); if(!meta) return;
+  const quoteMeta=$('#rankQuoteMeta');
   if(!data||data.ok===false){
     meta.className='rank-meta err';
     meta.textContent=(data&&data.error)?data.error:'暂时无法获取人气榜。';
+    if(quoteMeta) quoteMeta.hidden=true;
     return;
   }
   meta.className='rank-meta';
-  meta.textContent=`更新于 ${data.updatedAtText||'—'} · 来源 东方财富（非交易建议）`;
+  meta.textContent=`榜单更新于 ${data.updatedAtText||'—'}`;
+  meta.title=meta.textContent;
+  if(quoteMeta){
+    const items=data.items||[];
+    const missing=items.filter(item=>typeof item.price!=='number'||typeof item.changePct!=='number').length;
+    const stale=items.filter(item=>item.quoteStale).length;
+    quoteMeta.hidden=false;
+    const quoteNotes=[missing?`${missing} 只行情暂缺`:'',stale?`${stale} 只沿用上次行情`:''].filter(Boolean);
+    quoteMeta.textContent=[`行情来源：${data.quoteSource||'—'}`,...quoteNotes].join(' · ');
+    quoteMeta.title=quoteMeta.textContent;
+  }
 }
 async function loadRank(manual){
   if(rankLoading) return;
@@ -2615,7 +2641,7 @@ function renderFeed(){
   $('#stTotal').textContent=list.length;
   if($('#stTotalD')) $('#stTotalD').textContent = f.favOnly
     ? '当前为收藏筛选'
-    : (f.date ? `筛选日期 ${f.date}` : `${dataMode==='live'?'最近7天新闻':'示例快讯'}共 ${list.length} 条`);
+    : (f.date ? `筛选日期 ${f.date}` : `${dataMode==='live'?'快讯':'示例快讯'}共 ${list.length} 条`);
   $('#stHot').textContent   =list.filter(n=>n.stars>=4).length;
   $('#stFav').textContent   =state.favorites.size;
   // 去重统计：同一标的可能同时出现在多条快讯的传导链中
@@ -3667,134 +3693,42 @@ openAnalysis('n1');
 showScreen(['feed','analysis','import','calendar','settings'].includes(location.hash.slice(1))
   ? location.hash.slice(1) : 'feed');
 /* ============================================================
-   接口设置：只读状态 + 单项目探活
-   网页不提供写入能力，密钥只能由「设置密钥.cmd」落地到本机
+   接口设置：展示站只读状态
    ============================================================ */
 const API_ORDER=[
-  {key:'ifind', title:'iFinD 授权串', hint:'新闻检索、行情、标的共用同一个授权串'},
-  {key:'deepseek', title:'DeepSeek API Key', hint:'新闻摘要、质量审核与智能分析'},
-  {key:'tavily', title:'Tavily API Key', hint:'可选：分析时补充公开网页证据'},
-  {key:'eastmoney', title:'东方财富人气榜', hint:'公开接口，无需授权'},
+  {key:'ifind', title:'iFinD', hint:'财经快讯、行情和相关标的'},
+  {key:'deepseek', title:'DeepSeek', hint:'新闻摘要、质量审核与智能分析'},
+  {key:'tavily', title:'Tavily', hint:'可选的公开网页搜索'},
+  {key:'eastmoney', title:'东方财富', hint:'股票人气榜'},
 ];
-let apiHealthData={providers:{}};
-let apiState={};
-
-/* 凭据来源：告诉使用者这个值是从哪一层读到的，排查时不用猜 */
-const API_SOURCE_LABEL={env:'环境变量',project:'api-config.json',user:'用户配置'};
-
-function apiBadge(kind,text){return `<span class="api-badge ${kind}">${escapeHtml(text)}</span>`;}
-function apiSource(text){
-  const label=API_SOURCE_LABEL[text];
-  return label?`<span class="api-src">${escapeHtml(label)}</span>`:'';
-}
-
-function renderApiList(){
-  const box=$('#apiList'); if(!box) return;
-  const providers=apiHealthData.providers||{};
-  box.innerHTML=API_ORDER.map(cfg=>{
-    const p=providers[cfg.key]||{};
-    let badge,keyText;
-    if(cfg.key==='eastmoney'){
-      badge=apiBadge('ok','免授权'); keyText='<span class="api-key">公开接口</span>';
-    } else if(p.configured){
-      badge=apiBadge('ok','已配置'); keyText=`<span class="api-key">${escapeHtml(p.masked||'')}</span>`;
-    } else {
-      badge=apiBadge('none','未配置'); keyText='<span class="api-key">—</span>';
-    }
-    const st=apiState[cfg.key]||{status:'idle'};
-    let result='<span class="muted">尚未检测</span>';
-    let bad=false;
-    if(st.status==='loading'){result='<span class="muted">检测中…</span>';}
-    else if(st.status==='done'){
-      const r=st.result||{};
-      bad=!r.ok;
-      result=(r.ok?'<span>✓ '+escapeHtml(r.detail||'可用')+'</span>'
-                  :'<span>✕ '+escapeHtml(r.detail||'不可用')+'</span>')
-        +'<span class="ms">'+(r.ms||0)+' ms</span>';
-    }
-    return `<div class="card api-card" data-api="${cfg.key}">
-      <div class="api-head">
-        <span class="api-name">${escapeHtml(cfg.title)}</span>
-        ${keyText}${cfg.key==='eastmoney'?'':apiSource(p.source)}${badge}
-        <button type="button" class="btn sm api-test" data-target="${cfg.key}"${st.status==='loading'?' disabled':''}>检测</button>
-      </div>
-      <div class="api-result${bad?' bad':''}">${result}</div>
-      <div class="muted" style="font-size:12px;margin-top:6px">${escapeHtml(cfg.hint)}</div>
-    </div>`;
-  }).join('');
-  $$('#apiList .api-test').forEach(b=>b.addEventListener('click',()=>runProbe(b.dataset.target)));
-}
-
-/* 两级配置文件的实际路径与是否已创建，方便同学确认自己改的是哪个文件 */
-function renderApiPaths(paths){
-  const box=$('#apiPaths'); if(!box) return;
-  if(!paths){box.innerHTML='';return;}
-  const row=(label,value,exists,createTip)=>{
-    return `<li class="${exists?'':'off'}">
-      <span>${escapeHtml(label)}</span>
-      <code>${escapeHtml(value||'')}</code>
-      <span class="flag">${exists?'已创建':'未创建'}</span>
-      ${exists?'':`<span class="muted" style="font-size:11.5px">${escapeHtml(createTip)}</span>`}
-    </li>`;
-  };
-  box.innerHTML=row('项目配置',paths.project,paths.projectExists,'双击「打开配置文件.cmd」生成')
-    +row('用户配置（可选）',paths.user,paths.userExists,'双击「设置密钥.cmd」生成');
-}
 
 async function loadHealth(){
   const note=$('#apiNote');
+  const list=$('#apiList');
   try{
     const res=await fetch('/api/health',{cache:'no-store'});
     const data=await res.json();
-    if(!data.ok) throw new Error(data.error||'读取失败');
-    apiHealthData=data;
-    const server=data.server||{};
-    const applied=server.configApplied||[];
-    const projectFile=(server.configPaths||{}).project||'';
-    if(note){
-      note.innerHTML=(applied.length
-        ? '已读取 <b>'+applied.length+'</b> 项凭据'
-        : '未读取到凭据，页面将以演示数据运行')
-        +(projectFile
-          ? ' · <span class="muted">优先级：环境变量 &gt; 项目配置 &gt; 用户配置</span>'
-          : ' · <span class="muted">'+escapeHtml(server.configPath||'')+'</span>');
-    }
-    renderApiPaths(server.configPaths||null);
-    renderApiList();
-  }catch(err){
-    apiHealthData={providers:{}};
-    if(note) note.textContent='无法读取配置状态：'+((err&&err.message)||'网络异常');
-    renderApiList();
+    if(!res.ok || !data.ok) throw new Error('读取失败');
+    list.innerHTML=API_ORDER.map(cfg=>{
+      const isPublic=cfg.key==='eastmoney';
+      const configured=Boolean(data.providers?.[cfg.key]?.configured);
+      const status=isPublic?'公开接口':configured?'已配置':'未配置';
+      return `<div class="card api-card">
+        <div class="api-head">
+          <span class="api-name">${escapeHtml(cfg.title)}</span>
+          <span class="api-badge ${isPublic||configured?'ok':'none'}">${status}</span>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:6px">${escapeHtml(cfg.hint)}</div>
+      </div>`;
+    }).join('');
+    note.textContent='显示服务器配置状态。';
+  }catch{
+    list.innerHTML='';
+    note.textContent='暂时无法读取接口状态，请稍后刷新。';
   }
 }
 
-async function runProbe(target){
-  apiState[target]={status:'loading'};
-  renderApiList();
-  try{
-    const res=await fetch('/api/health/probe',{method:'POST',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify({target:target})});
-    const data=await res.json();
-    if(!data.ok||!data.result) throw new Error(data.error||'检测失败');
-    apiState[target]={status:'done',result:data.result};
-  }catch(err){
-    apiState[target]={status:'done',result:{ok:false,ms:0,detail:(err&&err.message)||'检测失败'}};
-  }
-  renderApiList();
-}
-
-async function runAllProbes(){
-  const btn=$('#healthAllBtn');
-  if(btn){btn.disabled=true;btn.textContent='检测中…';}
-  try{
-    for(const cfg of API_ORDER){ await runProbe(cfg.key); }
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='全部检测';}
-  }
-}
-
-if($('#healthAllBtn')) $('#healthAllBtn').addEventListener('click',runAllProbes);
-if($('#healthRefreshBtn')) $('#healthRefreshBtn').addEventListener('click',()=>{apiState={};loadHealth();});
+if($('#healthRefreshBtn')) $('#healthRefreshBtn').addEventListener('click',loadHealth);
 if($('#srcPanel')){
   const gotoApi=()=>showScreen('settings');
   $('#srcPanel').addEventListener('click',gotoApi);

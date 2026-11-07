@@ -311,6 +311,7 @@ def evidence_tool(name, args, timeout):
 
 
 class Handler(base.Handler):
+    rank_quote_call = staticmethod(IFIND.call)
     server_version = "FinSightFeedback/1.0"
 
     def log_message(self, _format, *_args):
@@ -336,17 +337,19 @@ class Handler(base.Handler):
             return self.send_json(403, {"ok": False, "error": "请从本站页面操作"})
         if method == "POST" and self.headers.get_content_type() != "application/json":
             return self.send_json(415, {"ok": False, "error": "请求须使用 JSON 格式"})
-        costly = path in {"/api/news", "/api/analyze", "/api/market-kline", "/api/stock-kline",
-                          "/api/related-stocks", "/api/health/probe"} or (
-            method == "POST" and path.startswith("/api/imports"))
+        query = parse_qs(urlsplit(self.path).query)
+        reads_snapshot = path == "/api/news" and query.get("snapshot", ["0"])[0] == "1"
+        costly = (not reads_snapshot and path in {
+            "/api/news", "/api/analyze", "/api/market-kline", "/api/stock-kline",
+            "/api/related-stocks", "/api/health/probe",
+        }) or (method == "POST" and path.startswith("/api/imports"))
         if costly and not UPSTREAM_SLOTS.acquire(blocking=False):
             return self.send_json(429, {"ok": False, "error": "请求较多，请稍后重试"})
         try:
-            query = parse_qs(urlsplit(self.path).query)
             if method == "GET" and path == "/api/health":
                 return self.api_health()
             if method == "POST" and path == "/api/health/probe":
-                return self.api_health_probe()
+                return self.send_json(403, {"ok": False, "error": "展示站仅提供只读接口状态"})
             if method == "GET" and path == "/api/market-kline":
                 return self.send_json(*MARKET.market_kline(query))
             if method == "GET" and path == "/api/related-stocks":
@@ -362,18 +365,12 @@ class Handler(base.Handler):
                 UPSTREAM_SLOTS.release()
 
     def api_health(self):
-        """接口配置状态：只返回掩码与来源，不含完整密钥。"""
+        """Expose configuration availability only on the hosted demo."""
         self.send_json(200, {
             "ok": True,
-            "providers": config_store.status(),
-            "server": {
-                "runtime": "python", "commit": BASELINE,
-                "model": base.DEEPSEEK_MODEL,
-                "baseUrl": base.DEEPSEEK_BASE_URL,
-                "configPath": config_store.config_path(),
-                "configPaths": config_store.paths(),
-                "configApplied": CONFIG_APPLIED,
-                "retrieval": availability(),
+            "providers": {
+                key: {"configured": provider["configured"]}
+                for key, provider in config_store.status().items()
             },
         })
 

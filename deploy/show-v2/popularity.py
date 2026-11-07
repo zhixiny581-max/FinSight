@@ -19,15 +19,26 @@
 """
 
 import json
+import re
 import socket
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from threading import Lock
+from time import monotonic, time
+from urllib.parse import urlencode, urlsplit
+
+from market_adapter import CODE_KEYS, NAME_KEYS, clean, number, pick, provider_issue, records
+from news_provider import IFindError
 
 SHANGHAI = timezone(timedelta(hours=8))
 
 RANK_URL = "https://emappdata.eastmoney.com/stockrank/getAllCurrentList"
-QUOTE_URL = "https://push2.eastmoney.com/api/qt/ulist.np/get"
+QUOTE_URLS = (
+    "https://push2.eastmoney.com/api/qt/ulist.np/get",
+    "https://82.push2.eastmoney.com/api/qt/ulist.np/get",
+    "https://push2his.eastmoney.com/api/qt/ulist.np/get",
+)
 RANK_PAYLOAD = {
     "appId": "appId01",
     "globalId": "786e4c21-70dc-435a-93bb-38",
@@ -89,21 +100,34 @@ def _secid(code):
 def _quotes(codes, timeout):
     if not codes:
         return {}
-    params = "fltt=2&secids=%s&fields=f12,f13,f14,f2,f3" % ",".join(_secid(c) for c in codes)
-    request = urllib.request.Request(
-        QUOTE_URL + "?" + params, method="GET",
-        headers={"User-Agent": UA, "Referer": "https://quote.eastmoney.com/",
-                 "Accept": "application/json"},
-    )
-    try:
-        raw = _fetch(request, timeout)
-    except Exception:  # 行情只是补充信息，失败不影响榜单本身
+    params = urlencode({
+        "fltt": 2, "np": 3, "invt": 2,
+        "ut": "a79f54e3d4c8d44e494efb8f748db291",
+        "secids": ",".join(_secid(code) for code in codes),
+        "fields": "f12,f13,f14,f2,f3",
+        "cb": "finSightQuote", "_": int(time() * 1000),
+    }, safe=",")
+    for url in QUOTE_URLS:
+        req = urllib.request.Request(
+            url + "?" + params, method="GET",
+            headers={"User-Agent": UA, "Referer": "https://guba.eastmoney.com/",
+                     "Accept": "*/*"},
+        )
+        host = urlsplit(url).hostname
+        try:
+            raw = _fetch(req, timeout / len(QUOTE_URLS)).decode("utf-8")
+            wrapped = re.fullmatch(r"\s*finSightQuote\((.*)\)\s*;?\s*", raw, re.S)
+            payload = json.loads(wrapped[1] if wrapped else raw)
+            diff = (payload.get("data") or {}).get("diff")
+        except (OSError, ValueError, AttributeError) as error:
+            detail = getattr(error, "code", type(getattr(error, "reason", error)).__name__)
+            print("FINSIGHT_RANK_QUOTE_UNAVAILABLE", host, detail, flush=True)
+            continue
+        if isinstance(diff, (list, dict)) and diff:
+            break
+        print("FINSIGHT_RANK_QUOTE_EMPTY", host, flush=True)
+    else:
         return {}
-    try:
-        payload = json.loads(raw.decode("utf-8", "replace"))
-    except ValueError:
-        return {}
-    diff = ((payload.get("data") or {}).get("diff")) or []
     if isinstance(diff, dict):
         diff = list(diff.values())
     out = {}
@@ -121,12 +145,84 @@ def _quotes(codes, timeout):
     return out
 
 
-def fetch_rank(limit=20, timeout=8.0):
+_QUOTE_LOCK = Lock()
+_QUOTE_CACHE = {}
+_QUOTE_TTL = 120
+_QUOTE_RETRY = 15
+_QUOTE_RETENTION = 3600
+
+
+def _ifind_quotes(codes, quote_call, timeout):
+    symbols = sorted({
+        f"{code[2:]}.{code[:2]}" for code in codes
+        if re.fullmatch(r"(?:SH|SZ|BJ)\d{6}", code)
+    })
+    if not symbols:
+        return {}
+    with _QUOTE_LOCK:
+        now = monotonic()
+        for code in list(_QUOTE_CACHE):
+            if _QUOTE_CACHE[code][1] <= now:
+                del _QUOTE_CACHE[code]
+        missing = [code for code in symbols if code not in _QUOTE_CACHE or _QUOTE_CACHE[code][0] <= now]
+        if missing:
+            deadline = now + timeout
+            quotes = {}
+            retry = _QUOTE_RETRY
+            for start in range(0, len(missing), 10):
+                remaining = deadline - monotonic()
+                if remaining <= 0:
+                    break
+                batch = missing[start:start + 10]
+                try:
+                    data = quote_call("stock", "stock_highfreq_quotes", {
+                        "symbols": ",".join(batch),
+                        "indicators": "最新价,涨跌幅",
+                        "data_mode": "real_time",
+                    }, timeout=remaining)
+                except IFindError as error:
+                    issue = str(error)
+                else:
+                    issue = provider_issue(data)
+                if issue:
+                    print("FINSIGHT_RANK_IFIND_UNAVAILABLE", issue, flush=True)
+                    if issue in {"tool_limit", "permission_denied", "IFIND_NOT_CONFIGURED",
+                                 "IFIND_HTTP_401", "IFIND_HTTP_403", "IFIND_HTTP_429"}:
+                        retry = _QUOTE_TTL
+                        break
+                    continue
+                for row in records(data):
+                    symbol = clean(pick(row, CODE_KEYS), 16).upper()
+                    if symbol not in batch:
+                        continue
+                    name = clean(pick(row, NAME_KEYS), 40)
+                    price = number(pick(row, ("最新价", "latest", "price")))
+                    change = number(pick(row, ("涨跌幅", "涨跌幅(%)", "changeRatio", "changePct")))
+                    if name or price is not None or change is not None:
+                        quotes[symbol] = {
+                            "name": name, "price": price, "changePct": change,
+                            "asOf": clean(pick(row, ("time", "时间", "datetime")), 32),
+                        }
+            now = monotonic()
+            for code in missing:
+                quote = quotes.get(code)
+                if quote and quote["price"] is not None and quote["changePct"] is not None:
+                    _QUOTE_CACHE[code] = (now + _QUOTE_TTL, now + _QUOTE_RETENTION, quote)
+                    continue
+                previous = _QUOTE_CACHE.get(code)
+                if previous and previous[1] > now and previous[2].get("price") is not None:
+                    _QUOTE_CACHE[code] = (now + retry, previous[1], {**previous[2], "stale": True})
+                else:
+                    _QUOTE_CACHE[code] = (now + retry, now + retry, quote or {})
+        return {code: _QUOTE_CACHE[code][2] for code in symbols}
+
+
+def fetch_rank(limit=20, timeout=8.0, quote_call=None):
     """返回 {ok, items, updatedAt, source, ...}；失败抛 RankError。"""
     limit = max(1, min(int(limit or 20), 50))
     rows = _rank_raw(limit, timeout)
     codes = [str(r.get("sc") or "") for r in rows if isinstance(r, dict) and r.get("sc")]
-    quotes = _quotes(codes, timeout)
+    quotes = _ifind_quotes(codes, quote_call, timeout) if quote_call else _quotes(codes, timeout)
 
     items = []
     for row in rows:
@@ -134,15 +230,19 @@ def fetch_rank(limit=20, timeout=8.0):
         if not code or len(code) < 4:
             continue
         digits = code[2:]
-        quote = quotes.get(digits) or {}
+        market = code[:2].upper()
+        quote_key = f"{digits}.{market}" if quote_call else digits
+        quote = quotes.get(quote_key) or {}
         price = quote.get("price")
         change = quote.get("changePct")
         items.append({
             "rank": row.get("rk"),
             "code": digits,
-            "market": "SH" if code[:2].upper() == "SH" else "SZ",
+            "market": market,
             "name": quote.get("name") or "",
             "price": price if isinstance(price, (int, float)) else None,
+            "quoteAsOf": quote.get("asOf") or None,
+            "quoteStale": bool(quote.get("stale")),
             "changePct": change if isinstance(change, (int, float)) else None,
             # rc: 排名变化（正=上升），hisRc: 历史首次上榜时的名次，仅作参考
             "rankChange": row.get("rc") if isinstance(row.get("rc"), int) else None,
@@ -154,6 +254,7 @@ def fetch_rank(limit=20, timeout=8.0):
     return {
         "ok": True,
         "source": SOURCE_LABEL,
+        "quoteSource": "同花顺 iFinD" if quote_call else "东方财富",
         "sourceUrl": "https://guba.eastmoney.com/rank/",
         "updatedAt": now.isoformat(timespec="seconds"),
         "updatedAtText": now.strftime("%Y-%m-%d %H:%M:%S"),

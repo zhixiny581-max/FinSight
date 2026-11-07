@@ -1517,7 +1517,8 @@ class Handler(BaseHTTPRequestHandler):
             limit = 20
         try:
             import popularity
-            payload = popularity.fetch_rank(limit)
+            quote_call = getattr(self, "rank_quote_call", None)
+            payload = popularity.fetch_rank(min(limit, 20) if quote_call else limit, quote_call=quote_call)
         except Exception as error:  # noqa: BLE001
             code = getattr(error, "code", "RANK_FAILED")
             detail = getattr(error, "detail", "")

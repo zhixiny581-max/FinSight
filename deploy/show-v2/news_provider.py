@@ -581,6 +581,8 @@ class NewsProvider:
         return _text(value[0] if isinstance(value, (list, tuple)) and value else value)
 
     def fetch_news(self, query, imported=()):
+        if self._params(query, "snapshot") == "1":
+            return self._saved_feed(imported)
         dates = recent_dates()
         requested_date = self._params(query, "date")
         custom = " ".join(self._params(query, "q").split())[:120]
@@ -604,13 +606,27 @@ class NewsProvider:
             fresh = self._refresh(dates, custom)
             if not fresh.get("ok"):
                 return self._fallback(cached, imported, fresh.get("reason", "provider_unavailable"))
-            if cacheable and fresh.get("items"):
+            if cacheable:
                 stored = self._read(cache_file)
                 stored[cache_key] = {**fresh, "saved_at": time.time()}
                 self._write(cache_file, {day: stored[day] for day in recent_dates() if day in stored})
             return self._combined(fresh, imported)
         finally:
             self._refresh_lock.release()
+
+    def _saved_feed(self, imported):
+        stored = self._read("feed-days-v2.json")
+        days = sorted(
+            day for day, entry in stored.items()
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", day) and isinstance(entry, dict)
+            and entry.get("ok") and isinstance(entry.get("items"), list)
+        )[-7:]
+        items = [item for day in reversed(days) for item in stored[day]["items"]]
+        return self._combined({
+            "ok": True, "mode": "snapshot", "items": items,
+            "retrieved_at": max((_text(stored[day].get("retrieved_at")) for day in days), default=""),
+            "date_range": {"start": days[0], "end": days[-1]} if days else None,
+        }, list(imported))
 
     @staticmethod
     def _combined(payload, imported):
@@ -622,7 +638,7 @@ class NewsProvider:
         return {**payload, "items": merged, "manual_import_count": len(imported), "requeued_import_count": 0}
 
     def _fallback(self, cached, imported, reason):
-        if cached.get("items"):
+        if cached.get("ok") and isinstance(cached.get("items"), list):
             result = {k: v for k, v in cached.items() if k != "saved_at"}
             return self._combined({**result, "mode": "cache", "retrieval_method": "iFinD cached snapshot",
                                    "summary_mode": "cache", "summary_error": reason, "fallback_reason": reason}, imported)
